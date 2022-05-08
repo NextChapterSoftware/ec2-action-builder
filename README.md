@@ -1,1 +1,1 @@
-# ec2-action-builder
+# ec2-self-hosted-runner
