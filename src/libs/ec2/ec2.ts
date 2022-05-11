@@ -295,7 +295,7 @@ export class Ec2Instance {
           this.config.ec2InstanceType
         );
         if (
-          currentInstanceTypePrice &&          
+          currentInstanceTypePrice &&
           spotInstanceTypePrice < currentInstanceTypePrice
         )
           params.InstanceMarketOptions = {
