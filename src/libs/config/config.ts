@@ -18,6 +18,7 @@ export interface ConfigInterface {
     ec2AmiId: string;
     ec2InstanceIamRole: string;
     ec2InstanceTags: string;
+    ec2InstanceTtl: string;
     ec2SecurityGroupId: string;
     ec2SubnetId: string;
     ec2SpotInstanceStrategy: string;
@@ -40,6 +41,7 @@ export class ActionConfig implements ConfigInterface {
     ec2AmiId: string;
     ec2InstanceIamRole: string;
     ec2InstanceTags: string;
+    ec2InstanceTtl: string;
     ec2SecurityGroupId: string;
     ec2SubnetId: string;
     ec2SpotInstanceStrategy: string;
@@ -65,6 +67,7 @@ export class ActionConfig implements ConfigInterface {
         this.ec2AmiId = core.getInput("ec2_ami_id");
         this.ec2InstanceIamRole = core.getInput("ec2_instance_iam_role");
         this.ec2InstanceTags = JSON.parse(core.getInput("ec2_instance_tags"));
+        this.ec2InstanceTtl = core.getInput("ec2_instance_ttl");
         this.ec2SubnetId = core.getInput("ec2_subnet_id");
         this.ec2SecurityGroupId = core.getInput("ec2_security_group_id");
         this.ec2SpotInstanceStrategy = core.getInput("ec2_spot_instance_strategy");

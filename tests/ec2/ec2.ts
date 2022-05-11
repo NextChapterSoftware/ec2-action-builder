@@ -1,26 +1,19 @@
 import { expect } from 'chai';
-//import { faker } from '@faker-js/faker';
 import { Ec2Instance } from '../../src/libs/ec2/ec2';
-import { genMockConfig } from '../../src/libs/mockConfig';
+import { ActionConfig } from '../../src/libs/config/config';
 
 describe('EC2 lib tests', () => { 
-    const mockConfig = genMockConfig();
-    const ec2 = new Ec2Instance(mockConfig);
-
-    /*
-    it('get all subnets', async () => { 
-        const subnets = await ec2.getAllSubnets();
-        expect(subnets.length).to.greaterThan(0);        
-    });
+    const config = new ActionConfig()
+    const ec2 = new Ec2Instance(config);
 
     it('get subnet az', async () => { 
         expect(await ec2.getSubnetAz()).to.equal('us-west-2c');        
     });
 
     it('get spot instance price', async () => {         
-        expect(await ec2.getSpotInstancePrice()).to.be.greaterThan(0);        
+        expect(await ec2.getSpotInstancePrice('c5.large')).to.be.greaterThan(0);        
     });
-    */
+    
     it('get instance sizes for type', async () => {         
         expect((await ec2.getInstanceSizesForType("c5")).length).to.be.greaterThan(0);
         expect((await ec2.getInstanceSizesForType("foobar")).length).equals(0);

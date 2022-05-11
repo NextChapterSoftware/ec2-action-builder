@@ -2,10 +2,6 @@ import AWS from 'aws-sdk';
 import { ConfigInterface } from '../config/config';
 import { findValuesHelper } from '../utils/utils';
 
-interface OnDemandPricing {
-    instanceType: string;
-    price: number;
-}
 
 export class Ec2Pricing {
     config: ConfigInterface;
@@ -21,33 +17,10 @@ export class Ec2Pricing {
                 secretAccessKey: this.config.awsSecretAccessKey
             }
         );
-        //AWS.config.lo
+    
         this.client = new AWS.Pricing({
             credentials: this.credentials,
             region: 'us-east-1'
-        });
-    }
-
-    // Not used
-    describeServices() {
-
-        var params = {
-            FormatVersion: "aws_v1",
-            MaxResults: 1,
-            ServiceCode: "AmazonEC2"
-        };
-
-
-        return new Promise<AWS.Pricing.ServiceList>((resolve, reject) => {
-            this.client.describeServices(params, (err, data) => {
-                if (err) {
-                    return reject(err);
-                }
-                if (data.Services)
-                    resolve(data.Services);
-                else
-                    reject([])
-            });
         });
     }
 

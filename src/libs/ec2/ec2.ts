@@ -1,7 +1,8 @@
 
-import { Config, ConfigInterface } from '../config/config';
+import { ConfigInterface } from '../config/config';
 import * as _ from "lodash"
-import AWS, { Pricing } from 'aws-sdk';
+import AWS from 'aws-sdk';
+import * as core from '@actions/core';
 import { UserData } from './userdata';
 import { Ec2Pricing } from './pricing';
 
@@ -15,12 +16,17 @@ interface InstanceTypeInterface {
     vcpu: number;
 }
 
+interface FilterInterface {
+    Name: string;
+    Values: string[];
+}
 
 export class Ec2Instance {
     config: ConfigInterface;
     client: AWS.EC2;
     tags: Tag[];
     credentials: AWS.Credentials;
+    assumedRole: boolean = false;
 
     constructor(config: ConfigInterface) {
         this.config = config;
@@ -28,24 +34,28 @@ export class Ec2Instance {
             {
                 accessKeyId: this.config.awsAccessKeyId,
                 secretAccessKey: this.config.awsSecretAccessKey
+
             }
         );
         //AWS.config.lo
         this.client = new AWS.EC2({
             credentials: this.credentials,
-            region: this.config.awsRegion
+            region: this.config.awsRegion,
         });
 
         this.tags = this.getTags();
     }
 
-    async getEc2Client(): Promise<AWS.EC2> {
-
-        const credentials = (this.config.awsAssumeRole) ? await this.getCrossAccountCredentials() : this.credentials
-        return new AWS.EC2({
-            credentials: credentials,
-            region: this.config.awsRegion
-        });
+    async getEc2Client() {
+        if (!this.assumedRole && this.config.awsAssumeRole) {
+            this.assumedRole = !this.assumedRole;
+            const credentials = await this.getCrossAccountCredentials()
+            this.client = new AWS.EC2({
+                credentials: credentials,
+                region: this.config.awsRegion
+            });
+        }
+        return this.client;
     }
 
     getTags() {
@@ -62,6 +72,10 @@ export class Ec2Instance {
                 Key: "owner",
                 Value: "EC2_ACTION_BUILDER"
             },
+            {
+                Key: "github_job_id",
+                Value: this.config.githubJobId
+            },
             /*
             {
                 Key: "expiration",
@@ -71,92 +85,69 @@ export class Ec2Instance {
         ]
     }
 
-    getCrossAccountCredentials() {
+    async getCrossAccountCredentials() {
 
         const stsClient = new AWS.STS({
             credentials: this.credentials,
             region: this.config.awsRegion
         });
-        return new Promise<AWS.Credentials>((resolve, reject) => {
-            const timestamp = (new Date()).getTime();
-            const params = {
-                RoleArn: this.config.awsIamRoleArn,
-                RoleSessionName: `ec2-action-builder-${this.config.githubJobId}-${timestamp}`
-            };
-            stsClient.assumeRole(params, (err, data) => {
-                if (err)
-                    reject(err);
-                else {
-                    // TODO: handle this better and cleaner
-                    if (data.Credentials) {
-                        resolve(new AWS.Credentials(
-                            {
-                                accessKeyId: data.Credentials.AccessKeyId,
-                                secretAccessKey: data.Credentials.SecretAccessKey,
-                                sessionToken: data.Credentials.SessionToken,
-                            })
-                        );
-                    }
+
+        const timestamp = (new Date()).getTime();
+        const params = {
+            RoleArn: this.config.awsIamRoleArn,
+            RoleSessionName: `ec2-action-builder-${this.config.githubJobId}-${timestamp}`
+        };
+        try {
+            const data = await stsClient.assumeRole(params).promise();
+            core.info(`Generated temporary STS credentials`);
+
+            if (data.Credentials)
+                return {
+                    accessKeyId: data.Credentials.AccessKeyId,
+                    secretAccessKey: data.Credentials.SecretAccessKey,
+                    sessionToken: data.Credentials.SessionToken,
                 }
-            });
-        });
+
+            core.error(`STS returned empty response`);
+            throw Error("STS returned empty response");
+
+        } catch (error) {
+            core.error(`STS assume role failed`);
+            throw error;
+        }
     }
 
     async runInstances(params) {
-        return new Promise<AWS.EC2.InstanceList>((resolve, reject) => {
-            this.client.runInstances(params, (err, data) => {
-                if (err) {
-                    return reject(err);
-                }
-                if (data.Instances)
-                    resolve(data.Instances);
-                else 
-                    reject(null)
-            });
-        });
-    }
-
-    // not used
-    async getAllSubnets() {
-
         const client = await this.getEc2Client()
-        return new Promise<AWS.EC2.SubnetList>((resolve, reject) => {
-            client.describeSubnets({}, (err, data) => {
-                if (err) {
-                    return reject(err);
-                }
-                if (data.Subnets?.length && data.Subnets?.length > 0)
-                    resolve(data.Subnets);
-                else
-                    reject(null)
-            });
-        });
+
+        try {
+            return (await client.runInstances(params).promise()).Instances
+        } catch (error) {
+            core.error(`Failed to create instance(s)`);
+            throw error;
+        }
     }
 
     async getSubnetAz() {
         const client = await this.getEc2Client()
+        try {
 
-        return new Promise<string>((resolve, reject) => {
-            const params = {
-                SubnetIds: [
-                    this.config.ec2SubnetId
-                ]
-            };
-            client.describeSubnets(params, (err, data) => {
-                if (err) {
-                    return reject(err);
-                }
-                // TODO this should be cleaner
-                if (data.Subnets?.length && data.Subnets?.length > 0)
-                    if (data.Subnets[0].AvailabilityZone)
-                        resolve(data.Subnets[0].AvailabilityZone?.toString());
-                reject(null)
-            });
-        });
+            const subnets = (await client.describeSubnets(
+                {
+                    SubnetIds: [
+                        this.config.ec2SubnetId
+                    ]
+                }).promise()).Subnets
+            return subnets?.at(0)?.AvailabilityZone;
+
+        } catch (error) {
+            core.error(`Failed to lookup subnet az`);
+            throw error;
+        }
     }
 
     async getSpotInstancePrice(instanceType: string) {
-
+        const client = await this.getEc2Client()
         const params = {
             AvailabilityZone: await this.getSubnetAz(),
             //EndTime: new Date || 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)' || 123456789,
@@ -172,22 +163,19 @@ export class Ec2Instance {
             StartTime: new Date
         };
 
-        return new Promise<number>((resolve, reject) => {
+        try {
 
-            this.client.describeSpotPriceHistory(params, (err, data) => {
-                if (err)
-                    return reject(err);
+            const spotPriceHistory = (await client.describeSpotPriceHistory(params).promise()).SpotPriceHistory
+            return Number(spotPriceHistory?.at(0)?.SpotPrice)
 
-                if (data.SpotPriceHistory?.length == 1 && data.SpotPriceHistory[0].SpotPrice)
-                    resolve(Number(data.SpotPriceHistory[0].SpotPrice));
-                else
-                    reject(-1)
-            });
-        });
+        } catch (error) {
+            core.error(`Failed to lookup spot instance price`);
+            throw error;
+        }
     }
 
     async getInstanceSizesForType(instanceClass: string, includeBareMetal: boolean = false) {
-
+        const client = await this.getEc2Client()
         var params = {
             Filters: [
                 {
@@ -207,7 +195,7 @@ export class Ec2Instance {
         var instanceTypesList: InstanceTypeInterface[] = []
         var nextToken: string = '';
         do {
-            const response = (await this.client.describeInstanceTypes(params).promise())
+            const response = (await client.describeInstanceTypes(params).promise())
             response.InstanceTypes?.forEach(function (item) {
                 if (item.InstanceType && item.VCpuInfo?.DefaultCores)
                     instanceTypesList.push({
@@ -239,7 +227,6 @@ export class Ec2Instance {
     async bestSpotSizeForOnDemandPrice(instanceType: string) {
         const ec2Pricing = new Ec2Pricing(this.config);
         const currentOnDemandPrice = await ec2Pricing.getPriceForInstanceTypeUSD(this.config.ec2InstanceType)
-        console.log(`current ondemand price ${currentOnDemandPrice}`)
 
         var previousInstanceType = this.config.ec2InstanceType
         var bestInstanceType = this.config.ec2InstanceType
@@ -248,7 +235,6 @@ export class Ec2Instance {
             const spotPriceForLargerInstance = await this.getSpotInstancePrice(nextLargerInstance)
             previousInstanceType = bestInstanceType
             if (spotPriceForLargerInstance > 0 && currentOnDemandPrice > spotPriceForLargerInstance) {
-                console.log("here")
                 bestInstanceType = nextLargerInstance
             }
 
@@ -329,43 +315,74 @@ export class Ec2Instance {
             }
         }
 
-        this.runInstances(params)
+        return params;
     }
 
+    async getInstanceStatus(instanceId: string) {
+        const client = await this.getEc2Client()
+        try {
 
-    //  this.client.describeInstanceTypeOfferings  
-    /*
-    async getOndemandPrice(instanceType: string) {
-        const ServiceCode = "AmazonEC2";
-        const params = {
-            Filters: [
+            const instanceList = (await client.describeInstanceStatus({ InstanceIds: [instanceId] }).promise()).InstanceStatuses
+            return instanceList?.at(0)
+
+        } catch (error) {
+            core.error(`Failed to lookup status for instance ${instanceId}`);
+            throw error;
+        }
+    }
+
+    async getInstancesForTags() {
+        const client = await this.getEc2Client()
+        const filters: FilterInterface[] = [];
+        for (const tag of this.tags) {
+            filters.push(
                 {
-                    'Type': 'TERM_MATCH',
-                    'Field': 'location',
-                    'Value': await this.getSubnetAz()
-                },
-                {
-                    'Type': 'TERM_MATCH',
-                    'Field': 'instanceType',
-                    'Value': instanceType
-                }
-            ]
-        };
+                    Name: tag.Key,
+                    Values: [
+                        tag.Value,
+                    ]
+                })
+        }
+        try {
+            var params = {
+                Filters: filters,
+                MaxResults: 99,
+            };
 
+            const reservation = (await client.describeInstances(params).promise()).Reservations?.at(0)
+            return reservation?.Instances?.at(0)
 
-        return new Promise<AWS.Pricing.PriceList>((resolve, reject) => {
-            this.pricingClient.getProducts(params, (err, data) => {
-                if (err) {
-                    return reject(err);
-                }
-                //if (data.Subnets?.length && data.Subnets?.length > 0)
-                //if (data.SpotPriceHistory?.length == 1 && data.SpotPriceHistory[0].SpotPrice)
-                console.log(JSON.stringify(data))
-                    if (data.PriceList)
-                    resolve(data.PriceList);
-            });
-        });
-    }*/
+        } catch (error) {
+            core.error(`Failed to lookup status for instance for tags ${filters}`);
+            throw error;
+        }
+    }
 
+    async waitForInstanceRunningStatus(instanceId: string) {
+        const client = await this.getEc2Client()
+        try {
 
+            await client.waitFor('instanceRunning', { InstanceIds: [instanceId] }).promise()
+            core.info(`AWS EC2 instance ${instanceId} is up and running`);
+            return;
+
+        } catch (error) {
+            core.error(`AWS EC2 instance ${instanceId} init error`);
+            throw error;
+        }
+    }
+
+    async terminateInstances(instanceId: string) {
+        const client = await this.getEc2Client()
+        try {
+
+            await client.terminateInstances({ InstanceIds: [instanceId] }).promise()
+            core.info(`AWS EC2 instance ${instanceId} is terminated`);
+            return;
+
+        } catch (error) {
+            core.error(`Failed terminate instance ${instanceId}`);
+            throw error;
+        }
+    }
 }

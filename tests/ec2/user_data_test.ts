@@ -1,21 +1,14 @@
 import { expect } from 'chai';
 import { UserData } from '../../src/libs/ec2/userdata';
-import { genMockConfig } from '../../src/libs/mockConfig';
+import { ActionConfig } from '../../src/libs/config/config';
 
-
-describe('Options tests', () => { 
-    const mockConfig = genMockConfig();
-    const userData = new UserData(mockConfig);
-
-   /* it('get latest runner release version', async () => { 
-        const version = await userData.getRunnerVersion()
-        expect(version).is.string;
-        expect(version.length).to.greaterThan(0);        
-    });
+describe('Userdata tests', () => {     
+    const config = new ActionConfig()
+    const userData = new UserData(config); 
 
     it('get latest runner release version', async () => { 
         const userdata = await userData.getUserData()        
         expect(userdata).is.string;
         expect(userdata.length).to.greaterThan(0);        
-    });*/
+    });
 });

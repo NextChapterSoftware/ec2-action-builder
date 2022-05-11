@@ -1,18 +1,23 @@
 import { expect } from 'chai';
 import { GithubClient } from '../../src/libs/github/github';
-import { genMockConfig } from '../../src/libs/mockConfig';
+import { ActionConfig } from '../../src/libs/config/config';
 
+describe('Github API tests', () => {
+    const config = new ActionConfig()
+    const githubClient = new GithubClient(config);
 
-describe('Options tests', () => { 
-    const mockConfig = genMockConfig();
-    const githubClient = new GithubClient(mockConfig);
-/*
-    it('list runners with labels for repo', async () => { 
-        const runners = await githubClient.getRunnerWithLabels(["self-hosted", "Linux"])
-        console.log(runners)     
+    it('get latest runner release version', async () => {
+        const version = await githubClient.getRunnerVersion()
+        expect(version).is.string;
+        expect(version.length).to.greaterThan(0);
     });
 
-    it('get runner registration token for repo', async () => { 
+    it('list runners with labels for repo', async () => {
+        const runners = await githubClient.getRunnerWithLabels(["self-hosted", "Linux"])
+        expect(runners).not.throw
+    });
+
+    it('get runner registration token for repo', async () => {
         const token = await githubClient.getRunnerRegistrationToken()
         expect(token.token).is.not.undefined;
         expect(token.token.length).to.greaterThan(0);
@@ -20,9 +25,9 @@ describe('Options tests', () => {
         expect(token.expires_at.length).to.greaterThan(0);
     });
 
-    it('list runners with labels for repo', async () => { 
+    it('list runners with labels for repo', async () => {
         const runners = await githubClient.removeRunnerWithLabels(["foo", "bar"])
-        console.log(runners)     
-    });*/
+        expect(runners).is.true
+    });
 
 });
