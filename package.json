@@ -4,6 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc && ncc build lib/main.js",
+    "format": "prettier --write src/**/*.ts",
+    "format-check": "prettier --check '**/*.ts'",
+    "lint": "eslint src/**/*.ts",
+    "package": "ncc build --source-map --license licenses.txt",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' DOTENV_CONFIG_PATH=.env mocha -r dotenv/config -r ts-node/register './tests/**/*.ts' -timeout 10000"
   },
   "repository": {
@@ -18,7 +23,7 @@
   },
   "homepage": "https://github.com/teecp/ec2-action-builder#readme",
   "dependencies": {
-    "@actions/core": "^1.7.0",
+    "@actions/core": "^1.8.0",
     "@actions/github": "^5.0.1",
     "@actions/http-client": "^1.0.11",
     "aws-sdk": "^2.1128.0",

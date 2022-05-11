@@ -1,35 +1,57 @@
 import { ActionConfig } from "./libs/config/config";
+import { Ec2Instance } from "./libs/ec2/ec2";
 
-const ec2 = require('./ec2/ec2');
-const config = require('./config/config');
-const core = require('@actions/core');
+import * as core from "@actions/core";
+import { GithubClient } from "./libs/github/github";
+import { assertIsError } from "./libs/utils/utils";
 
 function setOutput(label, ec2InstanceId) {
-  core.setOutput('label', label);
-  core.setOutput('ec2-instance-id', ec2InstanceId);
+  core.setOutput("label", label);
+  core.setOutput("ec2-instance-id", ec2InstanceId);
 }
 
 async function start() {
-  const config = new ActionConfig()
-  const ec2Client = new Ec2Instance(config)
-  
-  const label = config.generateUniqueLabel();
-  const githubRegistrationToken = await gh.getRegistrationToken();
-  const ec2InstanceId = await aws.startEc2Instance(label, githubRegistrationToken);
-  setOutput(label, ec2InstanceId);
-  await aws.waitForInstanceRunning(ec2InstanceId);
-  await gh.waitForRunnerCreated(label);
+  const config = new ActionConfig();
+  const ec2Client = new Ec2Instance(config);
+  const ghClient = new GithubClient(config);
+
+  // Get instance config
+  const instanceConfig = await ec2Client.getInstanceConfiguration();
+
+  // Start instance
+  const instanceId = (await ec2Client.runInstances(instanceConfig))?.at(
+    0
+  )?.InstanceId;
+  //instances.at(0)?.InstanceId
+  //setOutput(label, ec2InstanceId);
+  if (instanceId) await ec2Client.waitForInstanceRunningStatus(instanceId);
+  else {
+    core.error("Failed to get ID of running instance");
+    throw Error("Failed to get ID of running instance");
+  }
+
+  if (instanceId) await ghClient.pollForRunnerCreation([config.githubJobId]);
+  else {
+    core.error("Instance failed to register with Github Actions");
+    throw Error("Instance failed to register with Github Actions");
+  }
 }
 
 async function stop() {
-  await aws.terminateEc2Instance();
-  await gh.removeRunner();
+  const config = new ActionConfig();
+  const ec2Client = new Ec2Instance(config);
+  const ghClient = new GithubClient(config);
+  const instanceId = await ec2Client.getInstancesForTags();
+  if (instanceId?.InstanceId)
+    await ec2Client.terminateInstances(instanceId?.InstanceId);
+  await ghClient.removeRunnerWithLabels([config.githubJobId]);
 }
 
 (async function () {
   try {
-    config.input.mode === 'start' ? await start() : await stop();
+    start();
   } catch (error) {
+    assertIsError(error);
     core.error(error);
     core.setFailed(error.message);
   }

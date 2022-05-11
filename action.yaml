@@ -44,11 +44,9 @@ inputs:
   ec2_security_group_id:
     description: 'Security group id'
     required: true
-    default: ''
   ec2_subnet_id:
     description: 'Subnet id'
     required: true
-    default: ''
   ec2_spot_instance_strategy:
   # none
   # SpotOnly
