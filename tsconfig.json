@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+      "target": "es6",
+      "module": "commonjs",
+      "outDir": "./lib",      
+      "strict": true,
+      "noImplicitAny": false,
+      "esModuleInterop": true,
+      "types": ["node", "mocha"]
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules"]
+}
