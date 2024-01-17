@@ -72,14 +72,30 @@ async function stop() {
     const config = new ActionConfig();
     const ec2Client = new Ec2Instance(config);
     const ghClient = new GithubClient(config);
+
+    // Following cleanup tasks are best-effort!
+    // Unused JIT runners will be automatically removed by GitHub
+    // EC2 instances are configured with a hard TTL and will terminate once TTL expires
+
+    // Try to remove runner
+    const deleted = await ghClient.removeRunnerWithLabels([config.githubActionRunnerLabel])
+    if(deleted){
+      core.info(`Removed runner with job id label ${config.githubActionRunnerLabel}`);
+    } else {
+      core.error(`Failed to clean up runner with job id label ${config.githubActionRunnerLabel}`);
+      core.info(`GitHub will automatically cleanup unused runners after sometime`);
+    }
+
+    // Try to remove EC2 instance
     const instanceId = await ec2Client.getInstancesForTags();
     if (instanceId?.InstanceId)
       await ec2Client.terminateInstances(instanceId?.InstanceId);
     const result = await ghClient.removeRunnerWithLabels([config.githubJobId]);
-    if(result)
+    if(result) {
       core.info("Finished instance cleanup");
-    else
-      throw Error("Failed to cleanup instance")
+    } else {
+      core.error("Failed to terminate ec2 instance. It will be automatically terminated once its TTL expires")
+    }
   } catch(error){
     core.info(error)
   }

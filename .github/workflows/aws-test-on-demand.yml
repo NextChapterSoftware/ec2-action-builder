@@ -1,12 +1,5 @@
 name: Test Distro
 
-#on:
-#  push:
-#    branches:
-#      - main
-#      - update_packages
- # pull_request:
- # workflow_dispatch:
 on:
   workflow_call:
     inputs:
