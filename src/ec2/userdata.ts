@@ -20,7 +20,7 @@ export class UserData {
       "#!/bin/bash",
       `shutdown -P +${this.config.ec2InstanceTtl}`,
       "CURRENT_PATH=$(pwd)",
-      `echo "shutdown -P now" > $CURRENT_PATH/shutdown_script.sh`,
+      `echo "shutdown -P +1" > $CURRENT_PATH/shutdown_script.sh`,
       "chmod +x $CURRENT_PATH/shutdown_script.sh",
       "export ACTIONS_RUNNER_HOOK_JOB_COMPLETED=$CURRENT_PATH/shutdown_script.sh",
       "mkdir -p actions-runner && cd actions-runner",
@@ -31,6 +31,7 @@ export class UserData {
       "tar xzf ./actions-runner-linux-${RUNNER_ARCH}-${GH_RUNNER_VERSION}.tar.gz",
       "export RUNNER_ALLOW_RUNASROOT=1",
       `RUNNER_NAME=${this.config.githubJobId}-$(hostname)-ec2`,
+      "[ -n \"$(command -v yum)\" ] && yum install libicu -y",
       `./config.sh --unattended  --ephemeral --url https://github.com/${github.context.repo.owner}/${github.context.repo.repo} --token ${runnerRegistrationToken.token} --labels ${this.config.githubActionRunnerLabel} --name $RUNNER_NAME`,
       "./run.sh",
     ];

@@ -1,0 +1,72 @@
+name: Test Distro
+
+#on:
+#  push:
+#    branches:
+#      - main
+#      - update_packages
+ # pull_request:
+ # workflow_dispatch:
+on:
+  workflow_call:
+    inputs:
+      ami-id:
+        description: "The id of ami to be tested"
+        required: true
+        type: string
+      ami-distro:
+        description: "The distro type of the supplied ami"
+        required: true
+        type: string
+    secrets:
+      aws-access-key-id:
+        description: "The AWS access key"
+        required: true
+      aws-secret-access-key:
+        description: "The AWS secret access key"
+        required: true
+      github-token:
+        description: "Github token (PAT)"
+        required: true
+      ec2-subnet-id:
+        description: "EC2 subnet id"
+        required: true
+      ec2-security-group-id:
+        description: "EC2 security group id"
+        required: true
+
+
+jobs:
+  start-runner:
+    timeout-minutes: 5
+    name:  ${{ inputs.ami-distro }} - ${{ inputs.ami-id }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: ./
+        with:
+          github_token: ${{ secrets.github-token }}
+          aws_access_key_id: ${{ secrets.aws-access-key-id }}
+          aws_secret_access_key: ${{ secrets.aws-secret-access-key }}
+          aws_region: "us-west-2"
+          ec2_instance_type: t2.small
+          ec2_ami_id: ${{ inputs.ami-id }}
+          ec2_subnet_id: ${{ secrets.ec2-subnet-id }}
+          ec2_security_group_id: ${{ secrets.ec2-security-group-id }}
+          ec2_instance_ttl: 15                # Optional (default is 60 minutes)
+          ec2_spot_instance_strategy: None    # None -> use On-Demand instances only
+
+    # Job that runs on the self-hosted runner
+  run-build:
+    timeout-minutes: 2
+    needs:
+      - start-runner
+    runs-on: ${{ github.run_id }}
+    steps:
+      - run: env
