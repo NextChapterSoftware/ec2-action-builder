@@ -1,5 +1,5 @@
-name: 'ec2 builder runner'
-description: 'action to provision ec2 instances on demand'
+name: 'ec2 action runner'
+description: 'custom action to provision runners using on-demand/spot ec2 instances'
 inputs:
   aws_access_key_id:
     description: 'AWS access key ID'
