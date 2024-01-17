@@ -53,9 +53,10 @@ Users can provide their own custom AMI image pre-loaded with all the necessary t
 
 ### 1. Create GitHub Personal Access Token
 1. Create a [fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
-2. Edit the token permissions and select `All repositories` for `Repository access`
-3. Grant `Read and Write access to administration` under Repository permissions
-4. Add the token to GitHub Action secrets and note the secret name
+2. Edit the token permissions and select `Only select repositories` for `Repository access`
+3. Select any repositories you wish to use with this action
+4. Grant `Read and Write access` for `Administration` access level under Repository permissions
+5. Add the token to GitHub Action secrets and note the secret name
 
 ### 2. Setup GitHub Secrets for IAM credentials
 
