@@ -1,0 +1,33 @@
+name: Test All
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  package:
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    name: test action with all distros
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/aws-test-on-demand.yml
+    strategy:
+      matrix:
+        include:
+          - ami-id: "ami-008fe2fc65df48dac"
+            ami-distro: " Ubuntu, 22.04 LTS"
+          - ami-id: "ami-0c2644caf041bb6de"
+            ami-distro: "Debian 12 (20231013-1532)"
+          - ami-id: "ami-0944e91aed79c721c"
+            ami-distro: "Amazon Linux 2023 2023.3.20240108.0"
+    with:
+      ami-id: ${{ matrix.ami-id }}
+      ami-distro: ${{ matrix.ami-distro}}
+    secrets:
+      github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+      aws-access-key-id: ${{ secrets.DEPLOY_AWS_ACCESS_KEY_ID }}
+      aws-secret-access-key: ${{ secrets.DEPLOY_AWS_SECRET_ACCESS_KEY }}
+      ec2-subnet-id: ${{ secrets.EC2_SUBNET_ID }}
+      ec2-security-group-id: ${{ secrets.EC2_SECURITY_GROUP_ID }}

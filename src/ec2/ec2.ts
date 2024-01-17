@@ -57,8 +57,8 @@ export class Ec2Instance {
   getTags() {
     return [
       {
-        Key: "name",
-        Value: this.config.githubJobId,
+        Key: "Name",
+        Value: `${this.config.githubRepo}-${this.config.githubJobId}`,
       },
       {
         Key: "github_ref",
@@ -72,6 +72,10 @@ export class Ec2Instance {
         Key: "github_job_id",
         Value: this.config.githubJobId,
       },
+      {
+        Key: "github_repo",
+        Value: this.config.githubRepo,
+      }
       /*
             {
                 Key: "expiration",

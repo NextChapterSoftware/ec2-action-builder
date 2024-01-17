@@ -17,12 +17,12 @@ async function start() {
 
   var ec2SpotStrategies: string[];
   switch (config.ec2SpotInstanceStrategy) {
-    case "MaxPerformance": {
-      ec2SpotStrategies = ["MaxPerformance", "SpotOnly", "none"]
+    case "maxperformance": {
+      ec2SpotStrategies = ["MaxPerformance", "SpotOnly"]
       core.info("Ec2 spot instance strategy is set to 'MaxPerformance' with 'SpotOnly' and 'None' as fallback");
       break;
     }
-    case "BestEffort": {
+    case "besteffort": {
       ec2SpotStrategies = ["BestEffort", "none"]
       core.info("Ec2 spot instance strategy is set to 'BestEffort' with 'None' as fallback");
       break;
@@ -67,19 +67,29 @@ async function start() {
 }
 
 async function stop() {
-  const config = new ActionConfig();
-  const ec2Client = new Ec2Instance(config);
-  const ghClient = new GithubClient(config);
-  const instanceId = await ec2Client.getInstancesForTags();
-  if (instanceId?.InstanceId)
-    await ec2Client.terminateInstances(instanceId?.InstanceId);
-  await ghClient.removeRunnerWithLabels([config.githubJobId]);
+  try {
+    core.info("Starting instance cleanup");
+    const config = new ActionConfig();
+    const ec2Client = new Ec2Instance(config);
+    const ghClient = new GithubClient(config);
+    const instanceId = await ec2Client.getInstancesForTags();
+    if (instanceId?.InstanceId)
+      await ec2Client.terminateInstances(instanceId?.InstanceId);
+    const result = await ghClient.removeRunnerWithLabels([config.githubJobId]);
+    if(result)
+      core.info("Finished instance cleanup");
+    else
+      throw Error("Failed to cleanup instance")
+  } catch(error){
+    core.info(error)
+  }
 }
 
 (async function () {
   try {
     start();
   } catch (error) {
+    stop()
     assertIsError(error);
     core.error(error);
     core.setFailed(error.message);
