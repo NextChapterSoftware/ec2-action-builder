@@ -44,7 +44,6 @@ export class GithubClient {
           }),
         };
 
-        //const mockRunnerData = {"total_count":2,"runners":[{"id":319,"name":"ip-192-168-0-139","os":"Linux","status":"online","busy":true,"labels":[{"id":297,"name":"self-hosted","type":"read-only"},{"id":298,"name":"Linux","type":"read-only"},{"id":299,"name":"X64","type":"read-only"},{"id":314,"name":"dow0w","type":"custom"}]},{"id":320,"name":"ip-192-168-11-102","os":"Linux","status":"online","busy":true,"labels":[{"id":297,"name":"self-hosted","type":"read-only"},{"id":298,"name":"Linux","type":"read-only"},{"id":299,"name":"X64","type":"read-only"},{"id":315,"name":"2pdrq","type":"custom"}]}]}
         const matches = _.filter(runners.data.runners, searchLabels);
         return matches.length > 0 ? matches[0] : null;
       } catch (error) {
@@ -55,18 +54,30 @@ export class GithubClient {
     return null;
   }
 
-  async getRunnerRegistrationToken() {
+  async getJITRunnerRegistrationConfig() {
     const octokit = github.getOctokit(this.config.githubToken);
     try {
+      this.config.githubActionRunnerLabel
       const response =
-        await octokit.rest.actions.createRegistrationTokenForRepo({
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-        });
+          await octokit.rest.actions.generateRunnerJitconfigForRepo({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            name: `${this.config.githubRepo}-${this.config.githubJobId}-${github.context.actor}`,
+            runner_group_id: 1,
+            labels: [
+              'self-hosted',
+              this.config.githubActionRunnerLabel,
+              github.context.actor
+            ],
+            work_folder: '_work',
+            /*headers: {
+              'X-GitHub-Api-Version': '2022-11-28'
+            }*/
+          })
 
       return response.data;
     } catch (error) {
-      core.error(`Failed to get Runner registration token: ${error}`);
+      core.error(`Failed to get just-in-time runner registration config: ${error}`);
       throw error;
     }
   }

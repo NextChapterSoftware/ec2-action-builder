@@ -53,9 +53,10 @@ Users can provide their own custom AMI image pre-loaded with all the necessary t
 
 ### 1. Create GitHub Personal Access Token
 1. Create a [fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
-2. Edit the token permissions and select `All repositories` for `Repository access`
-3. Grant `Read and Write access to administration` under Repository permissions
-4. Add the token to GitHub Action secrets and note the secret name
+2. Edit the token permissions and select `Only select repositories` for `Repository access`
+3. Select any repositories you wish to use with this action
+4. Grant `Read and Write access` for `Administration` access level under Repository permissions
+5. Add the token to GitHub Action secrets and note the secret name
 
 ### 2. Setup GitHub Secrets for IAM credentials
 
@@ -166,7 +167,7 @@ jobs:
 ## How it all works under the hood
 
 ### General instance launch flow
-- Your GitHub personal token is used to obtain a Runner Registration token
+- Your GitHub personal token is used to obtain a just-in-time runner configuration
 - If no explicit runner version has been provided, it will retrieve the latest version number
 - It then uses all the provided info to compile an EC2 user-data script which does the following:
   - Set a max TTL on the EC2 instance on startup 
@@ -178,7 +179,7 @@ jobs:
 - Once EC2 boot has completed, user-data script is executed
 - Runner binary registers itself with GitHub API using the current job ID
 - Once the Runner is registered, control is transferred to the next job (this is your build job)
-- Upon a job completion (failure/success), Shutdown script is triggered to kill the instance with a 1 minute delay
+- Upon a job completion (failure/success), Shutdown script is triggered to `terminate` the instance with a 1 minute delay
 
 ### Spot instance provisioning
 - Script looks up On-Demand price for the supplied instance type

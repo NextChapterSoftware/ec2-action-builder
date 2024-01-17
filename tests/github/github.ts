@@ -17,17 +17,36 @@ describe('Github API tests', () => {
         expect(runners).not.throw
     });
 
-    it('get runner registration token for repo', async () => {
-        const token = await githubClient.getRunnerRegistrationToken()
-        expect(token.token).is.not.undefined;
-        expect(token.token.length).to.greaterThan(0);
-        expect(token.expires_at).is.not.undefined;
-        expect(token.expires_at.length).to.greaterThan(0);
+
+    it('get jit runner registration config for repo', async () => {
+        const jitConfig = await githubClient.getJITRunnerRegistrationConfig();
+        expect(jitConfig.encoded_jit_config).is.not.undefined;
+        expect(jitConfig.encoded_jit_config.length).to.greaterThan(0);
+        const runners = await githubClient.getRunnerWithLabels([config.githubActionRunnerLabel])
+        expect(runners).not.throw
+        expect(runners).is.not.empty
+        expect(runners).is.not.equal(null)
     });
 
-    it('list runners with labels for repo', async () => {
-        const runners = await githubClient.removeRunnerWithLabels(["foo", "bar"])
+    it('remove runners with labels for repo', async () => {
+        let runners = await githubClient.removeRunnerWithLabels(["foo", "bar"])
         expect(runners).is.true
+
+        // Check if runner exists before removing
+        runners = await githubClient.getRunnerWithLabels([config.githubActionRunnerLabel])
+        expect(runners).not.throw
+        expect(runners).is.not.empty
+        expect(runners).is.not.equal(null)
+
+        // Remove runner
+        const result = await githubClient.removeRunnerWithLabels([config.githubActionRunnerLabel])
+        expect(result).is.true
+
+        // Check if runner has been deleted
+        runners = await githubClient.getRunnerWithLabels([config.githubActionRunnerLabel])
+        expect(runners).not.throw
+        expect(runners).is.equal(null)
+
     });
 
 });

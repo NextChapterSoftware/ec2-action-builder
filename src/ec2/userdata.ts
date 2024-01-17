@@ -12,7 +12,7 @@ export class UserData {
   async getUserData(): Promise<string> {
     const ghClient = new GithubClient(this.config);
     const githubActionRunnerVersion = await ghClient.getRunnerVersion();
-    const runnerRegistrationToken = await ghClient.getRunnerRegistrationToken();
+    const jitRunnerRegistrationConfig = await ghClient.getJITRunnerRegistrationConfig();
     if (!this.config.githubActionRunnerLabel)
       throw Error("failed to object job ID for label");
 
@@ -32,8 +32,7 @@ export class UserData {
       "export RUNNER_ALLOW_RUNASROOT=1",
       `RUNNER_NAME=${this.config.githubJobId}-$(hostname)-ec2`,
       "[ -n \"$(command -v yum)\" ] && yum install libicu -y",
-      `./config.sh --unattended  --ephemeral --url https://github.com/${github.context.repo.owner}/${github.context.repo.repo} --token ${runnerRegistrationToken.token} --labels ${this.config.githubActionRunnerLabel} --name $RUNNER_NAME`,
-      "./run.sh",
+      `./run.sh --jitconfig ${jitRunnerRegistrationConfig.encoded_jit_config}`,
     ];
 
     return Buffer.from(cmds.join("\n")).toString("base64");

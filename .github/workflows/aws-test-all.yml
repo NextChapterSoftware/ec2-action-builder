@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - add_support_for_just_intime_runners
 jobs:
   package:
     permissions:
@@ -11,7 +12,7 @@ jobs:
       contents: read
       pull-requests: read
     name: test action with all distros
-    if: github.ref == 'refs/heads/main'
+    #if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/aws-test-on-demand.yml
     strategy:
       matrix:
