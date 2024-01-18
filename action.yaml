@@ -1,5 +1,5 @@
 name: 'Deploy self-hosted runners to EC2 (Spot/On-Demand)'
-description: 'Automatically deploy self-hosted runners to AWS EC2 using Spot or On-Demand instances. Combine Spot and On-Demand instances for best performance/cost.'
+description: 'Automatically deploy self-hosted runners to AWS EC2 using Spot/On-Demand instances and optimize for best performance/cost.'
 inputs:
   aws_access_key_id:
     description: 'AWS access key ID'
