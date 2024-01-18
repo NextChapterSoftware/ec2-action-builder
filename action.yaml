@@ -1,5 +1,5 @@
-name: 'ec2 action runner'
-description: 'custom action to provision runners using on-demand/spot ec2 instances'
+name: 'Deploy self-hosted runners to EC2 (Spot/On-Demand)'
+description: 'Automatically deploy self-hosted runners to AWS EC2 using Spot or On-Demand instances. Combine Spot and On-Demand instances for best performance/cost.'
 inputs:
   aws_access_key_id:
     description: 'AWS access key ID'
