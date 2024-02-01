@@ -70,7 +70,7 @@ export class ActionConfig implements ConfigInterface {
         this.ec2InstanceType = core.getInput("ec2_instance_type");
         this.ec2AmiId = core.getInput("ec2_ami_id");
         this.ec2InstanceIamRole = core.getInput("ec2_instance_iam_role");
-        this.ec2InstanceTags = JSON.parse(core.getInput("ec2_instance_tags"));
+        this.ec2InstanceTags = core.getInput("ec2_instance_tags");
         this.ec2InstanceTtl = core.getInput("ec2_instance_ttl");
         this.ec2SubnetId = core.getInput("ec2_subnet_id");
         this.ec2SecurityGroupId = core.getInput("ec2_security_group_id");
