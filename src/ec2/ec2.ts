@@ -55,6 +55,12 @@ export class Ec2Instance {
   }
 
   getTags() {
+    // Parse custom tags
+    let customTags = []
+    if(this.config.ec2InstanceTags){
+      customTags = JSON.parse(this.config.ec2InstanceTags);
+    }
+
     return [
       {
         Key: "Name",
@@ -75,13 +81,8 @@ export class Ec2Instance {
       {
         Key: "github_repo",
         Value: this.config.githubRepo,
-      }
-      /*
-            {
-                Key: "expiration",
-                Value: "some time goes here"
-            },
-            */
+      },
+        ...customTags
     ];
   }
 
