@@ -34,6 +34,7 @@ export class Ec2Instance {
     this.credentials = {
       accessKeyId: this.config.awsAccessKeyId,
       secretAccessKey: this.config.awsSecretAccessKey,
+      sessionToken: this.config.awsSessionToken,
     };
 
     this.client = new EC2({

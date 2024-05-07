@@ -10,6 +10,10 @@ name: Test Distro
 on:
   workflow_call:
     inputs:
+      oidc:
+        description: "true if we're using OIDC auth"
+        required: true
+        type: boolean
       ami-id:
         description: "The id of ami to be tested"
         required: true
@@ -21,10 +25,10 @@ on:
     secrets:
       aws-access-key-id:
         description: "The AWS access key"
-        required: true
+        required: false
       aws-secret-access-key:
         description: "The AWS secret access key"
-        required: true
+        required: false
       github-token:
         description: "Github token (PAT)"
         required: true
@@ -47,13 +51,22 @@ jobs:
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        if: ${{ inputs.oidc }}
+        id: creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.ASSUME_ROLE_ARN }}
+          output-credentials: true
       - name: Start EC2 runner
         id: start-ec2-runner
         uses: ./
         with:
           github_token: ${{ secrets.github-token }}
-          aws_access_key_id: ${{ secrets.aws-access-key-id }}
-          aws_secret_access_key: ${{ secrets.aws-secret-access-key }}
+          aws-access-key-id: ${{ inputs.oidc && steps.creds.outputs.aws-access-key-id || secrets.aws-access-key-id }}
+          aws-secret-access-key: ${{ inputs.oidc && steps.creds.outputs.aws-secret-access-key || secrets.aws-secret-access-key }}
+          aws-session-token: ${{ inputs.oidc && steps.creds.outputs.aws-session-token || '' }}
           aws_region: "us-west-2"
           ec2_instance_type: t2.small
           ec2_ami_id: ${{ inputs.ami-id }}
