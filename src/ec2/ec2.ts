@@ -32,6 +32,7 @@ export class Ec2Instance {
     this.credentials = new AWS.Credentials({
       accessKeyId: this.config.awsAccessKeyId,
       secretAccessKey: this.config.awsSecretAccessKey,
+      sessionToken: this.config.awsSessionToken,
     });
 
     this.client = new AWS.EC2({
@@ -57,7 +58,7 @@ export class Ec2Instance {
   getTags() {
     // Parse custom tags
     let customTags = []
-    if(this.config.ec2InstanceTags){
+    if (this.config.ec2InstanceTags) {
       customTags = JSON.parse(this.config.ec2InstanceTags);
     }
 
@@ -82,11 +83,20 @@ export class Ec2Instance {
         Key: "github_repo",
         Value: this.config.githubRepo,
       },
-        ...customTags
+      ...customTags,
     ];
   }
 
   async getCrossAccountCredentials() {
+    // if we have a valid session token then we just pass the credentials through
+    // possibly this is due to an OIDC/OAuth flow
+    if (
+      typeof this.credentials.sessionToken == "string" &&
+      this.credentials.sessionToken != ""
+    ) {
+      return Object.assign(this.credentials);
+    }
+
     const stsClient = new AWS.STS({
       credentials: this.credentials,
       region: this.config.awsRegion,
