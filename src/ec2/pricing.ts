@@ -118,12 +118,12 @@ export class Ec2Pricing {
           return reject(err);
         }
         if (data == undefined) {
-          return reject(err);
+          return reject("getProducts returned undefined data");
         }
-
         if (data.PriceList) {
+          const priceList = JSON.parse(data.PriceList[0] as string)
           let searchResult = findValuesHelper(
-            data.PriceList[0]["terms"]["OnDemand"],
+            priceList["terms"]["OnDemand"],
             "USD"
           );
           resolve(Number(searchResult[0]));

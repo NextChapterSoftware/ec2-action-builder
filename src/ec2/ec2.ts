@@ -1,7 +1,7 @@
 import { ConfigInterface } from "../config/config";
 import * as _ from "lodash";
 import { AwsCredentialIdentity } from "@smithy/types";
-import { EC2, waitUntilInstanceRunning, DescribeSpotPriceHistoryCommandInput, _InstanceType } from "@aws-sdk/client-ec2";
+import { EC2, waitUntilInstanceRunning, DescribeSpotPriceHistoryCommandInput, _InstanceType, RunInstancesCommandInput } from "@aws-sdk/client-ec2";
 import { STS } from "@aws-sdk/client-sts";
 import * as core from "@actions/core";
 import { UserData } from "./userdata";
@@ -116,7 +116,7 @@ export class Ec2Instance {
     }
   }
 
-  async runInstances(params) {
+  async runInstances(params: RunInstancesCommandInput) {
     const client = await this.getEc2Client();
 
     try {
@@ -232,9 +232,8 @@ export class Ec2Instance {
   async bestSpotSizeForOnDemandPrice(instanceType: string) {
     const ec2Pricing = new Ec2Pricing(this.config);
     const currentOnDemandPrice = await ec2Pricing.getPriceForInstanceTypeUSD(
-      this.config.ec2InstanceType
+      instanceType ? instanceType : this.config.ec2InstanceType
     );
-
     var previousInstanceType = this.config.ec2InstanceType;
     var bestInstanceType = this.config.ec2InstanceType;
     do {
@@ -264,11 +263,11 @@ export class Ec2Instance {
 
     const userData = new UserData(this.config);
 
-    var params = {
+    var params: RunInstancesCommandInput = {
       ImageId: this.config.ec2AmiId,
       InstanceInitiatedShutdownBehavior: "terminate",
       InstanceMarketOptions: {},
-      InstanceType: this.config.ec2InstanceType,
+      InstanceType: this.config.ec2InstanceType as _InstanceType,
       MaxCount: 1,
       MinCount: 1,
       SecurityGroupIds: [this.config.ec2SecurityGroupId],
@@ -317,7 +316,7 @@ export class Ec2Instance {
       case "maxperformance": {
         params.InstanceType = await this.bestSpotSizeForOnDemandPrice(
           this.config.ec2InstanceType
-        );
+        ) as _InstanceType;
         params.InstanceMarketOptions = {
           MarketType: "spot",
           SpotOptions: {
