@@ -90,6 +90,15 @@ export class Ec2Instance {
   }
 
   async getCrossAccountCredentials(): Promise<AwsCredentialIdentity> {
+    // if we have a valid session token then we just pass the credentials through
+    // possibly this is due to an OIDC/OAuth flow
+    if (
+        typeof this.credentials.sessionToken == "string" &&
+        this.credentials.sessionToken != ""
+    ) {
+      return Object.assign(this.credentials);
+    }
+
     const stsClient = new STS({
       credentials: this.credentials,
       region: this.config.awsRegion,
