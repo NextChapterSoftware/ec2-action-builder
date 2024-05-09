@@ -1,24 +1,26 @@
-import AWS from "aws-sdk";
+import { AwsCredentialIdentity } from "@smithy/types";
+import { Pricing, GetProductsCommandInput } from "@aws-sdk/client-pricing";
+import { STS } from "@aws-sdk/client-sts";
 import { ConfigInterface } from "../config/config";
 import { findValuesHelper } from "../utils/utils";
 import * as core from "@actions/core";
 
 export class Ec2Pricing {
   config: ConfigInterface;
-  client: AWS.Pricing;
+  client: Pricing;
   assumedRole: boolean = false;
 
-  credentials: AWS.Credentials;
+  credentials: AwsCredentialIdentity
 
   constructor(config: ConfigInterface) {
     this.config = config;
-    this.credentials = new AWS.Credentials({
+    this.credentials = {
       accessKeyId: this.config.awsAccessKeyId,
       secretAccessKey: this.config.awsSecretAccessKey,
       sessionToken: this.config.awsSessionToken,
-    });
+    };
 
-    this.client = new AWS.Pricing({
+    this.client = new Pricing({
       credentials: this.credentials,
       region: "us-east-1",
     });
@@ -28,7 +30,7 @@ export class Ec2Pricing {
     if (!this.assumedRole && this.config.awsAssumeRole) {
       this.assumedRole = !this.assumedRole;
       const credentials = await this.getCrossAccountCredentials();
-      this.client = new AWS.Pricing({
+      this.client = new Pricing({
         credentials: credentials,
         region: "us-east-1",
       });
@@ -36,7 +38,7 @@ export class Ec2Pricing {
     return this.client;
   }
 
-  async getCrossAccountCredentials() {
+  async getCrossAccountCredentials(): Promise<AwsCredentialIdentity> {
     // if we have a valid session token then we just pass the credentials through
     // possibly this is due to an OIDC/OAuth flow
     if (
@@ -46,7 +48,7 @@ export class Ec2Pricing {
       return Object.assign(this.credentials);
     }
 
-    const stsClient = new AWS.STS({
+    const stsClient = new STS({
       credentials: this.credentials,
       region: this.config.awsRegion,
     });
@@ -57,8 +59,8 @@ export class Ec2Pricing {
       RoleSessionName: `ec2-action-builder-${this.config.githubJobId}-${timestamp}`,
     };
     try {
-      const data = await stsClient.assumeRole(params).promise();
-      if (data.Credentials)
+      const data = await stsClient.assumeRole(params);
+      if (data.Credentials && data.Credentials.AccessKeyId && data.Credentials.SecretAccessKey)
         return {
           accessKeyId: data.Credentials.AccessKeyId,
           secretAccessKey: data.Credentials.SecretAccessKey,
@@ -76,7 +78,7 @@ export class Ec2Pricing {
   async getPriceForInstanceTypeUSD(instanceType: string) {
     const client = await this.getEc2Client();
 
-    var params = {
+    var params: GetProductsCommandInput = {
       Filters: [
         {
           Type: "TERM_MATCH",
@@ -124,10 +126,13 @@ export class Ec2Pricing {
         if (err) {
           return reject(err);
         }
-
+        if (data == undefined) {
+          return reject("getProducts returned undefined data");
+        }
         if (data.PriceList) {
+          const priceList = JSON.parse(data.PriceList[0] as string)
           let searchResult = findValuesHelper(
-            data.PriceList[0]["terms"]["OnDemand"],
+            priceList["terms"]["OnDemand"],
             "USD"
           );
           resolve(Number(searchResult[0]));
