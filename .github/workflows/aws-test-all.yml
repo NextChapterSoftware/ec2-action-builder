@@ -20,6 +20,7 @@ jobs:
           - ami-id: "ami-0944e91aed79c721c"
             ami-distro: "Amazon Linux 2023 2023.3.20240108.0"
     with:
+      oidc: false
       ami-id: ${{ matrix.ami-id }}
       ami-distro: ${{ matrix.ami-distro}}
     secrets:
