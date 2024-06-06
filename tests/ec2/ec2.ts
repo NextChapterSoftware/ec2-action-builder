@@ -37,10 +37,10 @@ describe('EC2 lib tests', () => {
         for (const amiID of
             ["ami-0e30b3388d74cee6d",    // Ubuntu
                 "ami-0c2644caf041bb6de", // Debian
-                "ami-089d88d106dd8e9b5"] // Amazon Linux
+                "ami-089d88d106dd8e9b5"]// Amazon Linux
             ) {
             // Get device info
-            const deviceInfo = await ec2.getRootDeviceInfo("ami-0e30b3388d74cee6d");
+            let deviceInfo = await ec2.getRootDeviceInfo(amiID);
             expect(deviceInfo).is.not.undefined
             expect(deviceInfo!.isEbs).is.not.false
             expect(deviceInfo!.deviceName).is.not.undefined
@@ -50,15 +50,12 @@ describe('EC2 lib tests', () => {
 
 
         // Windows
-        const deviceInfo = await ec2.getRootDeviceInfo("ami-0a335fb413d7589ee ");
+        let deviceInfo = await ec2.getRootDeviceInfo("ami-0a335fb413d7589ee ");
         expect(deviceInfo).is.not.undefined
         expect(deviceInfo!.isEbs).is.not.false
         expect(deviceInfo!.deviceName).is.not.undefined
         expect(deviceInfo!.deviceName).is.string
         expect(deviceInfo!.deviceName).to.include("/dev/sda1")
-
-
     });
-
 
 });

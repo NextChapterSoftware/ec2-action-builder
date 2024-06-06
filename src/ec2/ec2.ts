@@ -304,8 +304,8 @@ export class Ec2Instance {
     if (Number(this.config.ec2InstanceRootDiskSizeGB)) {
       const deviceInfo = await this.getRootDeviceInfo(this.config.ec2AmiId);
 
-      if (!deviceInfo || deviceInfo?.isEbs) {
-        throw Error(`${this.config.ec2AmiId} does must support EBS as volume type`);
+      if (!deviceInfo || !deviceInfo?.isEbs) {
+        throw Error(`${this.config.ec2AmiId} must support EBS as volume type`);
       }
 
       params.BlockDeviceMappings?.push(
