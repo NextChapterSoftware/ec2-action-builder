@@ -1,11 +1,19 @@
 import { ConfigInterface } from "../config/config";
 import * as _ from "lodash";
 import { AwsCredentialIdentity } from "@smithy/types";
-import { EC2, waitUntilInstanceRunning, DescribeSpotPriceHistoryCommandInput, _InstanceType, RunInstancesCommandInput } from "@aws-sdk/client-ec2";
+import {
+  EC2,
+  waitUntilInstanceRunning,
+  DescribeSpotPriceHistoryCommandInput,
+  _InstanceType,
+  RunInstancesCommandInput,
+  DescribeImagesCommand
+} from "@aws-sdk/client-ec2";
 import { STS } from "@aws-sdk/client-sts";
 import * as core from "@actions/core";
 import { UserData } from "./userdata";
 import { Ec2Pricing } from "./pricing";
+import {VolumeType} from "@aws-sdk/client-ec2/dist-types/models/models_1";
 
 interface Tag {
   Key: string;
@@ -289,7 +297,28 @@ export class Ec2Instance {
         },
       ],
       UserData: await userData.getUserData(),
+      BlockDeviceMappings: []
     };
+
+    // Add EBS volume if one was requested
+    if (Number(this.config.ec2InstanceRootDiskSizeGB)) {
+      const deviceInfo = await this.getRootDeviceInfo(this.config.ec2AmiId);
+
+      if (!deviceInfo || deviceInfo?.isEbs) {
+        throw Error(`${this.config.ec2AmiId} does must support EBS as volume type`);
+      }
+
+      params.BlockDeviceMappings?.push(
+          {
+            DeviceName: deviceInfo.deviceName,
+            Ebs: {
+              VolumeSize: Number(this.config.ec2InstanceRootDiskSizeGB),
+              VolumeType: this.config.ec2InstanceRootDiskEbsClass as VolumeType,
+              DeleteOnTermination: true  // Ensure volume is deleted on termination
+            }
+          }
+      )
+    }
 
     switch (ec2SpotInstanceStrategy.toLowerCase()) {
       case "spotonly": {
@@ -406,11 +435,34 @@ export class Ec2Instance {
   async terminateInstances(instanceId: string) {
     const client = await this.getEc2Client();
     try {
-      await client.terminateInstances({ InstanceIds: [instanceId] });
+      await client.terminateInstances({InstanceIds: [instanceId]});
       core.info(`AWS EC2 instance ${instanceId} is terminated`);
       return;
     } catch (error) {
       core.error(`Failed terminate instance ${instanceId}`);
+      throw error;
+    }
+  }
+
+  async getRootDeviceInfo(amiId: string): Promise<{ deviceName: string, isEbs: boolean } | undefined> {
+    const client = await this.getEc2Client();
+
+    try {
+      const command = new DescribeImagesCommand({ImageIds: [amiId.trim()]});
+      const response = await client.send(command);
+
+      if (response.Images && response.Images.length > 0) {
+        const image = response.Images[0];
+        if (image.RootDeviceName && image.RootDeviceType) {
+          return {
+            deviceName: image.RootDeviceName,
+            isEbs: image.RootDeviceType.includes("ebs")
+          }
+        }
+        return {deviceName: "", isEbs: false}
+      }
+    } catch (error) {
+      core.error("Error querying AMI information:", error);
       throw error;
     }
   }

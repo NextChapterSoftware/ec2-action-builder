@@ -153,6 +153,8 @@ jobs:
               github_action_runner_version: v2.300.2 # Optional (default is latest release)
               ec2_instance_type: c5.4xlarge
               ec2_ami_id: ami-008fe2fc65df48dac
+              ec2_root_disk_size_gb: "100"
+              ec2_root_disk_ebs_class: "gp2"
               ec2_subnet_id: "SUBNET_ID_REDACTED"
               ec2_security_group_id: "SECURITY_GROUP_ID_REDACTED"
               ec2_instance_ttl: 40                          # Optional (default is 60 minutes)

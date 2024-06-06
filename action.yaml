@@ -36,6 +36,14 @@ inputs:
   ec2_ami_id:
     description: 'Ec2 ami ID'
     required: true
+  ec2_root_disk_size_gb:
+    description: 'New disk size for Ec2 root volume (defaults to AMI setting)'
+    required: false
+    default: "0"
+  ec2_root_disk_ebs_class:
+    description: 'New disk size for Ec2 root volume (defaults to AMI setting)'
+    required: false
+    default: "gp2"
   ec2_instance_iam_role:
     description: 'IAM role for to associate with ec2 instance'
     required: false

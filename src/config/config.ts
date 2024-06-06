@@ -18,6 +18,8 @@ export interface ConfigInterface {
 
   ec2InstanceType: string;
   ec2AmiId: string;
+  ec2InstanceRootDiskSizeGB: string;
+  ec2InstanceRootDiskEbsClass: string;
   ec2InstanceIamRole: string;
   ec2InstanceTags: string;
   ec2InstanceTtl: string;
@@ -43,6 +45,8 @@ export class ActionConfig implements ConfigInterface {
 
   ec2InstanceType: string;
   ec2AmiId: string;
+  ec2InstanceRootDiskSizeGB: string;
+  ec2InstanceRootDiskEbsClass: string;
   ec2InstanceIamRole: string;
   ec2InstanceTags: string;
   ec2InstanceTtl: string;
@@ -72,6 +76,8 @@ export class ActionConfig implements ConfigInterface {
     // Ec2 params
     this.ec2InstanceType = core.getInput("ec2_instance_type");
     this.ec2AmiId = core.getInput("ec2_ami_id");
+    this.ec2InstanceRootDiskSizeGB = core.getInput("ec2_root_disk_size_gb");
+    this.ec2InstanceRootDiskEbsClass = core.getInput("ec2_root_disk_ebs_class");
     this.ec2InstanceIamRole = core.getInput("ec2_instance_iam_role");
     this.ec2InstanceTags = core.getInput("ec2_instance_tags");
     this.ec2InstanceTtl = core.getInput("ec2_instance_ttl");
