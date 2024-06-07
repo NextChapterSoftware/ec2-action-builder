@@ -40,7 +40,9 @@ Sources:
 - [GH Action Runner Pricing](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#per-minute-rates)
 
 ### Customizable Machine Image
-Users can provide their own custom AMI image pre-loaded with all the necessary tooling of their choice saving time and cost. 
+- Set custom EC2 root volume size 
+- Set custom storage class for root volume
+- Users can provide their own custom AMI image pre-loaded with all the necessary tooling of their choice saving time and cost. 
 
 ### Enhance Security
 - EC2 instances run within your infrastructure
@@ -153,11 +155,11 @@ jobs:
               github_action_runner_version: v2.300.2 # Optional (default is latest release)
               ec2_instance_type: c5.4xlarge
               ec2_ami_id: ami-008fe2fc65df48dac
-              ec2_root_disk_size_gb: "100"
-              ec2_root_disk_ebs_class: "gp2"
+              ec2_root_disk_size_gb: "100"                 # Optional - (defaults to AMI settings)
+              ec2_root_disk_ebs_class: "gp2"               # Optional - Only used with custom volume root size (defaults to gp2)
               ec2_subnet_id: "SUBNET_ID_REDACTED"
               ec2_security_group_id: "SECURITY_GROUP_ID_REDACTED"
-              ec2_instance_ttl: 40                          # Optional (default is 60 minutes)
+              ec2_instance_ttl: 40                          # Optional - (default is 60 minutes)
               ec2_spot_instance_strategy: MaxPerformance    # Other options are: None, BestEffort, MaxPerformance 
               ec2_instance_tags: >                          # Required for IAM role resource permission scoping
                 [
