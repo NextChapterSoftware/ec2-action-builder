@@ -20,7 +20,8 @@
                 "ec2:DescribeSubnets",
                 "ec2:describeSpotPriceHistory",
                 "pricing:GetProducts",
-                "pricing:GetAttributeValues"
+                "pricing:GetAttributeValues",
+                "ec2:DescribeImages"
             ],
             "Resource": "*",
             "Effect": "Allow"

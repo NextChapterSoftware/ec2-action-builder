@@ -32,5 +32,30 @@ describe('EC2 lib tests', () => {
         expect(nextInstanceType).to.include("c5")
     });
 
+    it('get root volume device name for AMI', async () => {
+
+        for (const amiID of
+            ["ami-0e30b3388d74cee6d",    // Ubuntu
+                "ami-0c2644caf041bb6de", // Debian
+                "ami-089d88d106dd8e9b5"]// Amazon Linux
+            ) {
+            // Get device info
+            let deviceInfo = await ec2.getRootDeviceInfo(amiID);
+            expect(deviceInfo).is.not.undefined
+            expect(deviceInfo!.isEbs).is.not.false
+            expect(deviceInfo!.deviceName).is.not.undefined
+            expect(deviceInfo!.deviceName).is.string
+            expect(deviceInfo!.deviceName).to.include("/dev/xvda")
+        }
+
+
+        // Windows
+        let deviceInfo = await ec2.getRootDeviceInfo("ami-0a335fb413d7589ee ");
+        expect(deviceInfo).is.not.undefined
+        expect(deviceInfo!.isEbs).is.not.false
+        expect(deviceInfo!.deviceName).is.not.undefined
+        expect(deviceInfo!.deviceName).is.string
+        expect(deviceInfo!.deviceName).to.include("/dev/sda1")
+    });
 
 });
