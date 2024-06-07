@@ -297,27 +297,28 @@ export class Ec2Instance {
         },
       ],
       UserData: await userData.getUserData(),
-      BlockDeviceMappings: []
+      BlockDeviceMappings: undefined
     };
 
     // Add EBS volume if one was requested
-    if (Number(this.config.ec2InstanceRootDiskSizeGB)) {
+    const sizeGB = parseInt(this.config.ec2InstanceRootDiskSizeGB.trim(), 10) || 0;
+    if (sizeGB > 0) {
       const deviceInfo = await this.getRootDeviceInfo(this.config.ec2AmiId);
 
       if (!deviceInfo || !deviceInfo?.isEbs) {
         throw Error(`${this.config.ec2AmiId} must support EBS as volume type`);
       }
 
-      params.BlockDeviceMappings?.push(
-          {
-            DeviceName: deviceInfo.deviceName,
-            Ebs: {
-              VolumeSize: Number(this.config.ec2InstanceRootDiskSizeGB),
-              VolumeType: this.config.ec2InstanceRootDiskEbsClass as VolumeType,
-              DeleteOnTermination: true  // Ensure volume is deleted on termination
-            }
+      params.BlockDeviceMappings = [
+        {
+          DeviceName: deviceInfo.deviceName,
+          Ebs: {
+            VolumeSize: Number(this.config.ec2InstanceRootDiskSizeGB),
+            VolumeType: this.config.ec2InstanceRootDiskEbsClass as VolumeType,
+            DeleteOnTermination: true  // Ensure volume is deleted on termination
           }
-      )
+        }
+      ]
     }
 
     switch (ec2SpotInstanceStrategy.toLowerCase()) {
