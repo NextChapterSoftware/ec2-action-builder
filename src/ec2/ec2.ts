@@ -295,6 +295,10 @@ export class Ec2Instance {
           ResourceType: "instance",
           Tags: this.tags,
         },
+        {
+          ResourceType: "volume",
+          Tags: this.tags,
+        }
       ],
       UserData: await userData.getUserData(),
       BlockDeviceMappings: undefined
