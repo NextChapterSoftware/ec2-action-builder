@@ -19,15 +19,19 @@ export class UserData {
     // This is to handle cleanup of orphaned instances or job cancelations
     var jobStartIdleTimeoutTask = "echo 'No idle timeout set'";
     if (Number(this.config.githubJobStartTtlSeconds) > 0) {
-      jobStartIdleTimeoutTask = `timeout=${this.config.githubJobStartTtlSeconds}; while ((timeout-- > 0)); do [ -d "_work" ] && echo "Job started..."; sleep 1; done; ../shutdown_script.sh`
+      jobStartIdleTimeoutTask = `timeout=${this.config.githubJobStartTtlSeconds}; while ((timeout-- > 0)); do [ -d "_work" ] && echo "Job started..."; sleep 1; done; ../shutdown_now_script.sh`
     }
 
+    // shutdown_now_script.sh => used for forceful terminate
+    // shutdown_script.sh => used for graceful termination with a delay allowing for log uploads
     const cmds = [
       "#!/bin/bash",
       `shutdown -P +${this.config.ec2InstanceTtl}`,
       "CURRENT_PATH=$(pwd)",
       `echo "./config.sh remove --token ${runnerRegistrationToken.token} || true" > $CURRENT_PATH/shutdown_script.sh`,
       `echo "shutdown -P +1" > $CURRENT_PATH/shutdown_script.sh`,
+      `echo "./config.sh remove --token ${runnerRegistrationToken.token} || true" > $CURRENT_PATH/shutdown_now_script.sh`,
+      `echo "shutdown -h now" > $CURRENT_PATH/shutdown_now_script.sh`,
       "chmod +x $CURRENT_PATH/shutdown_script.sh",
       "export ACTIONS_RUNNER_HOOK_JOB_COMPLETED=$CURRENT_PATH/shutdown_script.sh",
       "mkdir -p actions-runner && cd actions-runner",

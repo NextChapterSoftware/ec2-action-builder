@@ -153,6 +153,7 @@ jobs:
               aws_region: "us-west-2"
               github_token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
               github_action_runner_version: v2.300.2 # Optional (default is latest release)
+              github_job_start_ttl_seconds: 60             # Optional - (defaults to 0 disabling this feature)
               ec2_instance_type: c5.4xlarge
               ec2_ami_id: ami-008fe2fc65df48dac
               ec2_root_disk_size_gb: "100"                 # Optional - (defaults to AMI settings)
