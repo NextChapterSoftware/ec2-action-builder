@@ -19,7 +19,17 @@ export class UserData {
     // This is to handle cleanup of orphaned instances or job cancelations
     var jobStartIdleTimeoutTask = "echo 'No idle timeout set'";
     if (Number(this.config.githubJobStartTtlSeconds) > 0) {
-      jobStartIdleTimeoutTask = `timeout=${this.config.githubJobStartTtlSeconds}; found=0; while ((timeout-- > 0)); do [[ -d "_work" ]] && { found=1; break; }; sleep 1; done; [[ $found -eq 0 ]] && ../shutdown_now_script.sh`
+      jobStartIdleTimeoutTask = `
+        timeout=${this.config.githubJobStartTtlSeconds};
+        found=0;
+        (
+          while ((timeout-- > 0)); do
+            [[ -d "_work" ]] && { found=1; break; };
+            sleep 1;
+          done;
+          [[ $found -eq 0 ]] && ../shutdown_now_script.sh
+        ) &
+      `;
     }
 
     // shutdown_now_script.sh => used for forceful terminate
