@@ -46,8 +46,8 @@ async function start() {
         break;
       }
     } catch (error) {
-      if (error?.code && error.code === "InsufficientInstanceCapacity" && ec2SpotStrategies.length > 0 && ec2Strategy.toLocaleUpperCase() != "none")
-        core.info("Failed to create instance due to 'InsufficientInstanceCapacity', trying fallback strategy next");
+      if (error?.name && error.name === "InsufficientInstanceCapacity" && ec2SpotStrategies.length > 0 && ec2Strategy.toLocaleUpperCase() != "none")
+        core.warning("Failed to create instance due to 'InsufficientInstanceCapacity', trying fallback strategy next");
       else
         throw error;
     }
