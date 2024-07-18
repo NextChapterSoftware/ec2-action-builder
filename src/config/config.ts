@@ -15,6 +15,7 @@ export interface ConfigInterface {
   githubRepo: string;
   githubActionRunnerVersion: string;
   githubActionRunnerLabel: string;
+  githubJobStartTtlSeconds: string;
 
   ec2InstanceType: string;
   ec2AmiId: string;
@@ -42,6 +43,7 @@ export class ActionConfig implements ConfigInterface {
   githubRepo: string;
   githubActionRunnerVersion: string;
   githubActionRunnerLabel: string;
+  githubJobStartTtlSeconds: string;
 
   ec2InstanceType: string;
   ec2AmiId: string;
@@ -72,6 +74,7 @@ export class ActionConfig implements ConfigInterface {
       "github_action_runner_version"
     );
     this.githubActionRunnerLabel = this.githubJobId;
+    this.githubJobStartTtlSeconds = core.getInput("github_job_start_ttl_seconds");
 
     // Ec2 params
     this.ec2InstanceType = core.getInput("ec2_instance_type");

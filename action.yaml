@@ -30,6 +30,10 @@ inputs:
   #github_action_runner_label:
   #  description: 'GitHub action runner label'
   #  required: false
+  github_job_start_ttl_seconds:
+    description: 'Maximum duration a runner instance is allowed to be idle before a job is started in seconds'
+    required: false
+    default: '0'
   ec2_instance_type:
     description: 'Ec2 instance type'
     required: true
