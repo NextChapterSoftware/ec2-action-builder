@@ -34,22 +34,25 @@ async function start() {
   }
 
   var instanceId = "";
-  for (const ec2Strategy of ec2SpotStrategies) {
-    core.info(`Starting instance with ${ec2Strategy} strategy`);
-    // Get instance config
-    const instanceConfig = await ec2Client.getInstanceConfiguration(ec2Strategy);
-    try {
-      // Start instance
-      const response = (await ec2Client.runInstances(instanceConfig))
-      if (response?.length && response.length > 0 && response[0].InstanceId) {
-        instanceId = response[0].InstanceId
-        break;
+  for (const subnetId of config.ec2SubnetId) {
+    core.info(`Trying to launch instance in subnet ${subnetId}`)
+    for (const ec2Strategy of ec2SpotStrategies) {
+      core.info(`Starting instance with ${ec2Strategy} strategy`);
+      // Get instance config
+      const instanceConfig = await ec2Client.getInstanceConfiguration(ec2Strategy, subnetId);
+      try {
+        // Start instance
+        const response = (await ec2Client.runInstances(instanceConfig))
+        if (response?.length && response.length > 0 && response[0].InstanceId) {
+          instanceId = response[0].InstanceId
+          break;
+        }
+      } catch (error) {
+        if (error?.name && error.name === "InsufficientInstanceCapacity" && ec2SpotStrategies.length > 0 && ec2Strategy.toLocaleUpperCase() != "none")
+          core.warning("Failed to create instance due to 'InsufficientInstanceCapacity', trying fallback strategy next");
+        else
+          throw error;
       }
-    } catch (error) {
-      if (error?.name && error.name === "InsufficientInstanceCapacity" && ec2SpotStrategies.length > 0 && ec2Strategy.toLocaleUpperCase() != "none")
-        core.warning("Failed to create instance due to 'InsufficientInstanceCapacity', trying fallback strategy next");
-      else
-        throw error;
     }
   }
 

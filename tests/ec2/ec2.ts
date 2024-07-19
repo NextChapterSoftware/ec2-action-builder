@@ -6,12 +6,19 @@ describe('EC2 lib tests', () => {
     const config = new ActionConfig()
     const ec2 = new Ec2Instance(config);
 
-    it('get subnet az', async () => { 
-        expect(await ec2.getSubnetAz()).to.equal('us-west-2c');        
+    it('get subnet az', async () => {
+        const azPattern = /^[a-zA-Z0-9]+-[a-zA-Z0-9]+-\d+[a-zA-Z0-9]$/;
+        for (const subnetId of config.ec2SubnetId) {
+            //expect(await ec2.getSubnetAz(subnetId)).to.equal('us-west-2c');
+            expect(await ec2.getSubnetAz(subnetId)).to.match(azPattern, `invalid AZ name`);
+        }
+
     });
 
-    it('get spot instance price', async () => {         
-        expect(await ec2.getSpotInstancePrice('c5.large')).to.be.greaterThan(0);        
+    it('get spot instance price', async () => {
+        for (const subnetId of config.ec2SubnetId) {
+            expect(await ec2.getSpotInstancePrice('c5.large', subnetId)).to.be.greaterThan(0);
+        }
     });
     
     it('get instance sizes for type', async () => {         
@@ -25,11 +32,13 @@ describe('EC2 lib tests', () => {
         expect(await ec2.getNextLargerInstanceType("c5.24xlarge")).equals("c5.24xlarge");
     });
 
-    it('get next larger spot instance for current ondemand price', async () => {         
-        const nextInstanceType = await ec2.bestSpotSizeForOnDemandPrice("c5.large");
-        expect(nextInstanceType).is.string
-        expect(nextInstanceType.length).is.greaterThan(0)
-        expect(nextInstanceType).to.include("c5")
+    it('get next larger spot instance for current ondemand price', async () => {
+        for (const subnetId of config.ec2SubnetId) {
+            const nextInstanceType = await ec2.bestSpotSizeForOnDemandPrice("c5.large", subnetId);
+            expect(nextInstanceType).is.string
+            expect(nextInstanceType.length).is.greaterThan(0)
+            expect(nextInstanceType).to.include("c5")
+        }
     });
 
     it('get root volume device name for AMI', async () => {

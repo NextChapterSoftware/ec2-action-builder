@@ -145,13 +145,13 @@ export class Ec2Instance {
     }
   }
 
-  async getSubnetAz() {
+  async getSubnetAz(subnetId: string) {
     const client = await this.getEc2Client();
     try {
       const subnets = (
         await client
           .describeSubnets({
-            SubnetIds: [this.config.ec2SubnetId],
+            SubnetIds: [subnetId],
           })
       ).Subnets;
       return subnets?.at(0)?.AvailabilityZone;
@@ -161,10 +161,10 @@ export class Ec2Instance {
     }
   }
 
-  async getSpotInstancePrice(instanceType: string) {
+  async getSpotInstancePrice(instanceType: string, subnetId: string) {
     const client = await this.getEc2Client();
     const params: DescribeSpotPriceHistoryCommandInput = {
-      AvailabilityZone: await this.getSubnetAz(),
+      AvailabilityZone: await this.getSubnetAz(subnetId),
       //EndTime: new Date || 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)' || 123456789,
       InstanceTypes: [
         (instanceType ? instanceType : this.config.ec2InstanceType) as _InstanceType,
@@ -247,7 +247,7 @@ export class Ec2Instance {
     return instanceTypeList[nextInstanceTypeIndex].name;
   }
 
-  async bestSpotSizeForOnDemandPrice(instanceType: string) {
+  async bestSpotSizeForOnDemandPrice(instanceType: string, subnetId: string) {
     const ec2Pricing = new Ec2Pricing(this.config);
     const currentOnDemandPrice = await ec2Pricing.getPriceForInstanceTypeUSD(
       instanceType ? instanceType : this.config.ec2InstanceType
@@ -259,7 +259,8 @@ export class Ec2Instance {
         bestInstanceType
       );
       const spotPriceForLargerInstance = await this.getSpotInstancePrice(
-        nextLargerInstance
+        nextLargerInstance,
+        subnetId
       );
 
       previousInstanceType = bestInstanceType;
@@ -274,7 +275,7 @@ export class Ec2Instance {
     return bestInstanceType;
   }
 
-  async getInstanceConfiguration(ec2SpotInstanceStrategy: string) {
+  async getInstanceConfiguration(ec2SpotInstanceStrategy: string, subnetId: string) {
     const ec2Pricing = new Ec2Pricing(this.config);
     const currentInstanceTypePrice =
       await ec2Pricing.getPriceForInstanceTypeUSD(this.config.ec2InstanceType);
@@ -289,7 +290,7 @@ export class Ec2Instance {
       MaxCount: 1,
       MinCount: 1,
       SecurityGroupIds: [this.config.ec2SecurityGroupId],
-      SubnetId: this.config.ec2SubnetId,
+      SubnetId: subnetId,
       TagSpecifications: [
         {
           ResourceType: "instance",
@@ -332,7 +333,8 @@ export class Ec2Instance {
           SpotOptions: {
             InstanceInterruptionBehavior: "terminate",
             MaxPrice: `${await this.getSpotInstancePrice(
-              this.config.ec2InstanceType
+              this.config.ec2InstanceType, 
+              subnetId
             )}`,
             SpotInstanceType: "one-time",
           },
@@ -341,7 +343,8 @@ export class Ec2Instance {
       }
       case "besteffort": {
         const spotInstanceTypePrice = await this.getSpotInstancePrice(
-          this.config.ec2InstanceType
+          this.config.ec2InstanceType,
+          subnetId
         );
         if (
           currentInstanceTypePrice &&
@@ -359,7 +362,8 @@ export class Ec2Instance {
       }
       case "maxperformance": {
         params.InstanceType = await this.bestSpotSizeForOnDemandPrice(
-          this.config.ec2InstanceType
+          this.config.ec2InstanceType,
+          subnetId
         ) as _InstanceType;
         params.InstanceMarketOptions = {
           MarketType: "spot",
