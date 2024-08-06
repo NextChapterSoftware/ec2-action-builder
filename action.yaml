@@ -26,6 +26,9 @@ inputs:
   github_action_runner_version:
     description: 'GitHub action runner version'
     required: false
+  github_action_runner_extra_cli_args:
+    description: 'GitHub action runner extra cli args'
+    required: false
   # Custom label support still needs more work. For now we default to job ID
   #github_action_runner_label:
   #  description: 'GitHub action runner label'
