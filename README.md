@@ -134,6 +134,14 @@ jobs:
 - IAM policy and role setup instructions can be found [here](docs/CrossAccountIAM.md)
 - Modify `ec2_spot_instance_strategy` for other deployment strategies. List of all values can be found [here](action.yaml)
 
+**IMPORTANT NOTE**
+
+`An error occured: Runner version vX.YZ is deprecated and cannot receive messages.`
+
+Error message above is usually caused by `--disableupdate` custom configuration argument used with a deprecated Runner version.
+Make sure to use a runner that has not been deprecated or omit `github_action_runner_version` to use the latest available version. 
+
+
 ```yaml
 jobs:
     start-runner:
