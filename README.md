@@ -134,6 +134,14 @@ jobs:
 - IAM policy and role setup instructions can be found [here](docs/CrossAccountIAM.md)
 - Modify `ec2_spot_instance_strategy` for other deployment strategies. List of all values can be found [here](action.yaml)
 
+**IMPORTANT NOTE**
+
+`An error occured: Runner version vX.YZ is deprecated and cannot receive messages.`
+
+Error message above is usually caused by `--disableupdate` custom configuration argument used with a deprecated Runner version.
+Make sure to use a runner that has not been deprecated or omit `github_action_runner_version` to use the latest available version. 
+
+
 ```yaml
 jobs:
     start-runner:
@@ -152,8 +160,9 @@ jobs:
               aws_iam_role_arn: "arn:aws:iam::REDACTED:role/REDACTED"
               aws_region: "us-west-2"
               github_token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-              github_action_runner_version: v2.300.2 # Optional (default is latest release)
-              github_job_start_ttl_seconds: 60             # Optional - (defaults to 0 disabling this feature)
+              github_action_runner_version: v2.300.2                  # Optional (default is latest release)
+              github_action_runner_extra_cli_args: "--disableupdate"  # Extra cli args for runner startup command
+              github_job_start_ttl_seconds: 60                        # Optional - (defaults to 0 disabling this feature)
               ec2_instance_type: c5.4xlarge
               ec2_ami_id: ami-008fe2fc65df48dac
               ec2_root_disk_size_gb: "100"                 # Optional - (defaults to AMI settings)

@@ -54,7 +54,7 @@ export class UserData {
       "export RUNNER_ALLOW_RUNASROOT=1",
       `RUNNER_NAME=${this.config.githubJobId}-$(hostname)-ec2`,
       "[ -n \"$(command -v yum)\" ] && yum install libicu -y",
-      `./config.sh --unattended  --ephemeral --url https://github.com/${github.context.repo.owner}/${github.context.repo.repo} --token ${runnerRegistrationToken.token} --labels ${this.config.githubActionRunnerLabel} --name $RUNNER_NAME`,
+      `./config.sh --unattended  --ephemeral --url https://github.com/${github.context.repo.owner}/${github.context.repo.repo} --token ${runnerRegistrationToken.token} --labels ${this.config.githubActionRunnerLabel} --name $RUNNER_NAME ${this.config.githubActionRunnerExtraCliArgs}`,
       jobStartIdleTimeoutTask,
       "./run.sh",
     ];

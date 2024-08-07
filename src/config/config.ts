@@ -14,6 +14,7 @@ export interface ConfigInterface {
   githubRef: string;
   githubRepo: string;
   githubActionRunnerVersion: string;
+  githubActionRunnerExtraCliArgs: string;
   githubActionRunnerLabel: string;
   githubJobStartTtlSeconds: string;
 
@@ -42,6 +43,7 @@ export class ActionConfig implements ConfigInterface {
   githubRef: string;
   githubRepo: string;
   githubActionRunnerVersion: string;
+  githubActionRunnerExtraCliArgs: string;
   githubActionRunnerLabel: string;
   githubJobStartTtlSeconds: string;
 
@@ -72,6 +74,9 @@ export class ActionConfig implements ConfigInterface {
     this.githubRepo = github.context.repo.repo;
     this.githubActionRunnerVersion = core.getInput(
       "github_action_runner_version"
+    );
+    this.githubActionRunnerExtraCliArgs = core.getInput(
+        "github_action_runner_extra_cli_args"
     );
     this.githubActionRunnerLabel = this.githubJobId;
     this.githubJobStartTtlSeconds = core.getInput("github_job_start_ttl_seconds");
