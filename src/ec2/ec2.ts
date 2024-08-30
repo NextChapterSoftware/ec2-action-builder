@@ -283,7 +283,7 @@ export class Ec2Instance {
 
     var params: RunInstancesCommandInput = {
       ImageId: this.config.ec2AmiId,
-      IamInstanceProfile: this.config.instanceProfile,
+      IamInstanceProfile: this.config.ec2IamInstanceProfile,
       InstanceInitiatedShutdownBehavior: "terminate",
       InstanceMarketOptions: {},
       InstanceType: this.config.ec2InstanceType as _InstanceType,
