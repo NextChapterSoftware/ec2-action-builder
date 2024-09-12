@@ -42,7 +42,10 @@ inputs:
     required: true
   ec2_ami_id:
     description: 'Ec2 ami ID'
-    required: true
+    required: true  
+  ec2_iam_instance_profile:
+    description: 'Ec2 IAM Instance Profile'
+    required: false
   ec2_root_disk_size_gb:
     description: 'Ec2 root disk size (defaults to AMI setting)'
     required: false
