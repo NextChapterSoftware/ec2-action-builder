@@ -92,7 +92,7 @@ export class GithubClient {
 
   async waitForRunnerCreated(label) {
     const timeoutMinutes = 5;
-    const retryIntervalSeconds = 10;
+    const retryIntervalSeconds = 30;
     const quietPeriodSeconds = 30;
     let waitSeconds = 0;
 
