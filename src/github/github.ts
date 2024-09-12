@@ -129,7 +129,7 @@ export class GithubClient {
   // Borrowed from https://github.com/machulav/ec2-github-runner/blob/main/src/aws.js
   async pollForRunnerCreation(labels: string[]) {
     const timeoutMinutes = 5;
-    const retryIntervalSeconds = 10;
+    const retryIntervalSeconds = 30;
     const quietPeriodSeconds = 30;
     let waitSeconds = 0;
 
