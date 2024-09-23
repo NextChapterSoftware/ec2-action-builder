@@ -164,6 +164,7 @@ jobs:
               github_action_runner_version: v2.300.2                  # Optional (default is latest release)
               github_action_runner_extra_cli_args: "--disableupdate"  # Extra cli args for runner startup command
               github_job_start_ttl_seconds: 60                        # Optional - (defaults to 0 disabling this feature)
+              github_api_retry_delay: 10                              # Optional - Delay when polling for runner registration (default is 10 seconds)
               ec2_instance_type: c5.4xlarge
               ec2_ami_id: ami-008fe2fc65df48dac
               ec2_root_disk_size_gb: "100"                 # Optional - (defaults to AMI settings)
