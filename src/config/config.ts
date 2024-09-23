@@ -17,6 +17,7 @@ export interface ConfigInterface {
   githubActionRunnerExtraCliArgs: string;
   githubActionRunnerLabel: string;
   githubJobStartTtlSeconds: string;
+  githubApiRetryDelay: number;
 
   ec2InstanceType: string;
   ec2AmiId: string;
@@ -47,6 +48,7 @@ export class ActionConfig implements ConfigInterface {
   githubActionRunnerExtraCliArgs: string;
   githubActionRunnerLabel: string;
   githubJobStartTtlSeconds: string;
+  githubApiRetryDelay: number;
 
   ec2InstanceType: string;
   ec2AmiId: string;
@@ -82,6 +84,8 @@ export class ActionConfig implements ConfigInterface {
     );
     this.githubActionRunnerLabel = this.githubJobId;
     this.githubJobStartTtlSeconds = core.getInput("github_job_start_ttl_seconds");
+    this.githubApiRetryDelay = parseInt(core.getInput("github_api_retry_delay"), 10) || 10;
+
 
     // Ec2 params
     this.ec2InstanceType = core.getInput("ec2_instance_type");

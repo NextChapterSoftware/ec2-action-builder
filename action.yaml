@@ -37,6 +37,10 @@ inputs:
     description: 'Maximum duration a runner instance is allowed to be idle before a job is started in seconds'
     required: false
     default: '0'
+  github_api_retry_delay:
+    description: 'Retry delay between calls to github APIs'
+    required: false
+    default: '10'
   ec2_instance_type:
     description: 'Ec2 instance type'
     required: true
