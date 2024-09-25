@@ -65,7 +65,7 @@ inputs:
   ec2_instance_tags:
     description: 'List of extra aws resource tags for ec2 instance'
     required: false
-    default: '{}'
+    default: '[]'
   ec2_instance_ttl:
     description: 'Maximum duration an EC2 instance is allowed to live in minute'
     required: false
