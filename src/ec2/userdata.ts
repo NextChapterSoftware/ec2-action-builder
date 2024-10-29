@@ -38,6 +38,7 @@ export class UserData {
       "#!/bin/bash",
       `shutdown -P +${this.config.ec2InstanceTtl}`,
       "CURRENT_PATH=$(pwd)",
+      'CURRENT_PATH="${CURRENT_PATH%/}"',
       `echo "./config.sh remove --token ${runnerRegistrationToken.token} || true" > $CURRENT_PATH/shutdown_script.sh`,
       `echo "shutdown -P +1" > $CURRENT_PATH/shutdown_script.sh`,
       "chmod +x $CURRENT_PATH/shutdown_script.sh",
