@@ -73,13 +73,15 @@ async function stop() {
     const ec2Client = new Ec2Instance(config);
     const ghClient = new GithubClient(config);
     const instanceId = await ec2Client.getInstancesForTags();
-    if (instanceId?.InstanceId)
-      await ec2Client.terminateInstances(instanceId?.InstanceId);
     const result = await ghClient.removeRunnerWithLabels([config.githubJobId]);
     if(result)
-      core.info("Finished instance cleanup");
+      core.info("De-registered runner");
     else
-      throw Error("Failed to cleanup instance")
+      throw Error("Failed to de-registered runner")
+    if (instanceId?.InstanceId) {
+      await ec2Client.terminateInstances(instanceId?.InstanceId);
+      core.info("Instance cleanup complete!")
+    }
   } catch(error){
     core.info(error)
   }
