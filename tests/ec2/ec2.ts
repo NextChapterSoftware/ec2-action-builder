@@ -40,7 +40,7 @@ describe('EC2 lib tests', () => {
                 "ami-089d88d106dd8e9b5"]// Amazon Linux
             ) {
             // Get device info
-            let deviceInfo = await ec2.getRootDeviceInfo(amiID);
+            let deviceInfo = await ec2.getRootDeviceInfo(amiID);            
             expect(deviceInfo).is.not.undefined
             expect(deviceInfo!.isEbs).is.not.false
             expect(deviceInfo!.deviceName).is.not.undefined
@@ -50,7 +50,7 @@ describe('EC2 lib tests', () => {
 
 
         // Windows
-        let deviceInfo = await ec2.getRootDeviceInfo("ami-0a335fb413d7589ee ");
+        let deviceInfo = await ec2.getRootDeviceInfo("ami-0992e77a19022a98d");
         expect(deviceInfo).is.not.undefined
         expect(deviceInfo!.isEbs).is.not.false
         expect(deviceInfo!.deviceName).is.not.undefined
