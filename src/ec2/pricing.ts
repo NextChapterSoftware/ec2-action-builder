@@ -10,7 +10,7 @@ export class Ec2Pricing {
   client: Pricing;
   assumedRole: boolean = false;
 
-  credentials: AwsCredentialIdentity
+  credentials: AwsCredentialIdentity;
 
   constructor(config: ConfigInterface) {
     this.config = config;
@@ -42,8 +42,8 @@ export class Ec2Pricing {
     // if we have a valid session token then we just pass the credentials through
     // possibly this is due to an OIDC/OAuth flow
     if (
-        typeof this.credentials.sessionToken == "string" &&
-        this.credentials.sessionToken != ""
+      typeof this.credentials.sessionToken == "string" &&
+      this.credentials.sessionToken != ""
     ) {
       return Object.assign(this.credentials);
     }
@@ -60,7 +60,11 @@ export class Ec2Pricing {
     };
     try {
       const data = await stsClient.assumeRole(params);
-      if (data.Credentials && data.Credentials.AccessKeyId && data.Credentials.SecretAccessKey)
+      if (
+        data.Credentials &&
+        data.Credentials.AccessKeyId &&
+        data.Credentials.SecretAccessKey
+      )
         return {
           accessKeyId: data.Credentials.AccessKeyId,
           secretAccessKey: data.Credentials.SecretAccessKey,
@@ -130,7 +134,7 @@ export class Ec2Pricing {
           return reject("getProducts returned undefined data");
         }
         if (data.PriceList) {
-          const priceList = JSON.parse(data.PriceList[0] as string)
+          const priceList = JSON.parse(data.PriceList[0] as string);
           let searchResult = findValuesHelper(
             priceList["terms"]["OnDemand"],
             "USD"

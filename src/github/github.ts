@@ -29,12 +29,10 @@ export class GithubClient {
     const octokit = github.getOctokit(this.config.githubToken);
 
     try {
-      const runners = await octokit.rest.actions.listSelfHostedRunnersForRepo(
-        {
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-        }
-      );
+      const runners = await octokit.rest.actions.listSelfHostedRunnersForRepo({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+      });
 
       const searchLabels = {
         labels: labels.map(function (label) {
