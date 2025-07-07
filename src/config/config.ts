@@ -80,12 +80,14 @@ export class ActionConfig implements ConfigInterface {
       "github_action_runner_version"
     );
     this.githubActionRunnerExtraCliArgs = core.getInput(
-        "github_action_runner_extra_cli_args"
+      "github_action_runner_extra_cli_args"
     );
     this.githubActionRunnerLabel = this.githubJobId;
-    this.githubJobStartTtlSeconds = core.getInput("github_job_start_ttl_seconds");
-    this.githubApiRetryDelay = parseInt(core.getInput("github_api_retry_delay"), 10) || 10;
-
+    this.githubJobStartTtlSeconds = core.getInput(
+      "github_job_start_ttl_seconds"
+    );
+    this.githubApiRetryDelay =
+      parseInt(core.getInput("github_api_retry_delay"), 10) || 10;
 
     // Ec2 params
     this.ec2InstanceType = core.getInput("ec2_instance_type");

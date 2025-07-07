@@ -1,6 +1,5 @@
 import { ConfigInterface } from "../config/config";
 import * as github from "@actions/github";
-import { HttpClient, HttpClientResponse } from "@actions/http-client";
 import * as _ from "lodash";
 import * as core from "@actions/core";
 
@@ -15,26 +14,22 @@ export class GithubClient {
     if (this.config.githubActionRunnerVersion)
       return this.config.githubActionRunnerVersion.replace("v", "");
 
-    const httpClient = new HttpClient("http-client");
-    const res: HttpClientResponse = await httpClient.get(
-      "https://api.github.com/repos/actions/runner/releases/latest"
-    );
-
-    const body: string = await res.readBody();
-    const obj = JSON.parse(body);
-    return obj["tag_name"].replace("v", "");
+    const octokit = github.getOctokit(this.config.githubToken);
+    const resp = await octokit.rest.repos.getLatestRelease({
+      owner: "actions",
+      repo: "runner",
+    });
+    return resp.data.tag_name.replace("v", "");
   }
 
   async getRunnerWithLabels(labels: string[]) {
     const octokit = github.getOctokit(this.config.githubToken);
 
     try {
-      const runners = await octokit.rest.actions.listSelfHostedRunnersForRepo(
-        {
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-        }
-      );
+      const runners = await octokit.rest.actions.listSelfHostedRunnersForRepo({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+      });
 
       const searchLabels = {
         labels: labels.map(function (label) {
