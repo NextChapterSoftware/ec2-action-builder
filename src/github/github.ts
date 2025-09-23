@@ -88,7 +88,7 @@ export class GithubClient {
     const quietPeriodSeconds = 30;
     let waitSeconds = 0;
 
-    core.info(`Waiting ${quietPeriodSeconds}s before polling for runner`);
+    core.info(`Waiting ${quietPeriodSeconds}s before polling for runner ${labels.join(",")}`);
     await new Promise((r) => setTimeout(r, quietPeriodSeconds * 1000));
     core.info(`Polling for runner every ${retryIntervalSeconds}s`);
 
