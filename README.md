@@ -161,7 +161,7 @@ jobs:
         steps:      
           - name: Start EC2 runner
             id: start-ec2-runner
-            uses: unblocked/ec2-action-builder@v1.11
+            uses: unblocked/ec2-action-builder@v1.12
             with:
               aws_access_key_id: ${{ secrets.DEPLOY_AWS_ACCESS_KEY_ID }}
               aws_secret_access_key: ${{ secrets.DEPLOY_AWS_SECRET_ACCESS_KEY }}
@@ -169,7 +169,8 @@ jobs:
               aws_region: "us-west-2"
               github_token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
               github_action_runner_version: v2.300.2                  # Optional (default is latest release)
-              github_action_runner_extra_cli_args: "--disableupdate"  # Extra cli args for runner startup command
+              github_action_runner_extra_cli_args: "--disableupdate"  # Optional - Extra cli args for runner startup command
+              github_action_runner_label_prefix: MyPrefix             # Optional - (defaults to no prefix)
               github_job_start_ttl_seconds: 60                        # Optional - (defaults to 0 disabling this feature)
               github_api_retry_delay: 10                              # Optional - Delay when polling for runner registration (default is 10 seconds)
               ec2_instance_type: c5.4xlarge
