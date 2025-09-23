@@ -51,6 +51,12 @@ class ActionConfig {
         this.githubActionRunnerExtraCliArgs = core.getInput("github_action_runner_extra_cli_args");
         // github_action_runner_label_prefix
         const githubActionRunnerLabelPrefix = core.getInput("github_action_runner_label_prefix");
+        if (githubActionRunnerLabelPrefix === "") {
+            this.githubActionRunnerLabel = this.githubJobId;
+        }
+        else {
+            this.githubActionRunnerLabel = `${githubActionRunnerLabelPrefix}-${this.githubJobId}`;
+        }
         this.githubActionRunnerLabel = `${githubActionRunnerLabelPrefix}${this.githubJobId}`;
         this.githubJobStartTtlSeconds = core.getInput("github_job_start_ttl_seconds");
         this.githubApiRetryDelay =
@@ -942,7 +948,7 @@ class GithubClient {
             const retryIntervalSeconds = this.config.githubApiRetryDelay;
             const quietPeriodSeconds = 30;
             let waitSeconds = 0;
-            core.info(`Waiting ${quietPeriodSeconds}s before polling for runner`);
+            core.info(`Waiting ${quietPeriodSeconds}s before polling for runner ${labels.join(",")}`);
             yield new Promise((r) => setTimeout(r, quietPeriodSeconds * 1000));
             core.info(`Polling for runner every ${retryIntervalSeconds}s`);
             return new Promise((resolve, reject) => {
