@@ -94,7 +94,6 @@ export class ActionConfig implements ConfigInterface {
       this.githubActionRunnerLabel = `${githubActionRunnerLabelPrefix}-${this.githubJobId}`;
     }
     
-    this.githubActionRunnerLabel = `${githubActionRunnerLabelPrefix}${this.githubJobId}`;
     this.githubJobStartTtlSeconds = core.getInput(
       "github_job_start_ttl_seconds"
     );

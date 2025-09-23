@@ -57,7 +57,6 @@ class ActionConfig {
         else {
             this.githubActionRunnerLabel = `${githubActionRunnerLabelPrefix}-${this.githubJobId}`;
         }
-        this.githubActionRunnerLabel = `${githubActionRunnerLabelPrefix}${this.githubJobId}`;
         this.githubJobStartTtlSeconds = core.getInput("github_job_start_ttl_seconds");
         this.githubApiRetryDelay =
             parseInt(core.getInput("github_api_retry_delay"), 10) || 10;
