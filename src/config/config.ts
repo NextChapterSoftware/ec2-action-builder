@@ -82,7 +82,12 @@ export class ActionConfig implements ConfigInterface {
     this.githubActionRunnerExtraCliArgs = core.getInput(
       "github_action_runner_extra_cli_args"
     );
-    this.githubActionRunnerLabel = this.githubJobId;
+
+    // github_action_runner_label_prefix
+    const githubActionRunnerLabelPrefix = core.getInput(
+      "github_action_runner_label_prefix"
+    );
+    this.githubActionRunnerLabel = `${githubActionRunnerLabelPrefix}${this.githubJobId}`;
     this.githubJobStartTtlSeconds = core.getInput(
       "github_job_start_ttl_seconds"
     );
