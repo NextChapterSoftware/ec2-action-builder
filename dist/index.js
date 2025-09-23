@@ -1068,7 +1068,7 @@ function start() {
             throw Error("Failed to get ID of running instance");
         }
         if (instanceId)
-            yield ghClient.pollForRunnerCreation([config.githubJobId]);
+            yield ghClient.pollForRunnerCreation([config.githubActionRunnerLabel]);
         else {
             core.error("Instance failed to register with Github Actions");
             throw Error("Instance failed to register with Github Actions");
@@ -1085,7 +1085,7 @@ function stop() {
             const instanceId = yield ec2Client.getInstancesForTags();
             if (instanceId === null || instanceId === void 0 ? void 0 : instanceId.InstanceId)
                 yield ec2Client.terminateInstances(instanceId === null || instanceId === void 0 ? void 0 : instanceId.InstanceId);
-            const result = yield ghClient.removeRunnerWithLabels([config.githubJobId]);
+            const result = yield ghClient.removeRunnerWithLabels([config.githubActionRunnerLabel]);
             if (result)
                 core.info("Finished instance cleanup");
             else
