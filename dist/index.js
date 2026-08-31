@@ -881,16 +881,36 @@ class GithubClient {
         return __awaiter(this, void 0, void 0, function* () {
             const octokit = github.getOctokit(this.config.githubToken);
             try {
-                const runners = yield octokit.rest.actions.listSelfHostedRunnersForRepo({
+                // A repository can hold far more runners than one page. GitHub returns them
+                // oldest-first, so the runner we just registered sorts last - with a single
+                // unpaginated request (30 per page) it is invisible once the repo holds more
+                // than a page of runners, and pollForRunnerCreation then times out even though
+                // the runner registered correctly and is online.
+                const perPage = 100;
+                const firstPage = yield octokit.rest.actions.listSelfHostedRunnersForRepo({
                     owner: github.context.repo.owner,
                     repo: github.context.repo.repo,
+                    per_page: perPage,
+                    page: 1,
                 });
+                const runnerList = [...firstPage.data.runners];
+                let lastPageCount = firstPage.data.runners.length;
+                for (let page = 2; lastPageCount === perPage; page++) {
+                    const resp = yield octokit.rest.actions.listSelfHostedRunnersForRepo({
+                        owner: github.context.repo.owner,
+                        repo: github.context.repo.repo,
+                        per_page: perPage,
+                        page: page,
+                    });
+                    runnerList.push(...resp.data.runners);
+                    lastPageCount = resp.data.runners.length;
+                }
                 const searchLabels = {
                     labels: labels.map(function (label) {
                         return { name: label };
                     }),
                 };
-                const matches = _.filter(runners.data.runners, searchLabels);
+                const matches = _.filter(runnerList, searchLabels);
                 return matches.length > 0 ? matches[0] : null;
             }
             catch (error) {
