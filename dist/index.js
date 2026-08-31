@@ -791,10 +791,10 @@ class UserData {
                 "CURRENT_PATH=$(pwd)",
                 'CURRENT_PATH="${CURRENT_PATH%/}"',
                 `echo "./config.sh remove --token ${runnerRegistrationToken.token} || true" > $CURRENT_PATH/shutdown_script.sh`,
-                `echo "shutdown -P +1" > $CURRENT_PATH/shutdown_script.sh`,
+                `echo "shutdown -P +1" >> $CURRENT_PATH/shutdown_script.sh`,
                 "chmod +x $CURRENT_PATH/shutdown_script.sh",
                 `echo "./config.sh remove --token ${runnerRegistrationToken.token} || true" > $CURRENT_PATH/shutdown_now_script.sh`,
-                `echo "shutdown -h now" > $CURRENT_PATH/shutdown_now_script.sh`,
+                `echo "shutdown -h now" >> $CURRENT_PATH/shutdown_now_script.sh`,
                 "chmod +x $CURRENT_PATH/shutdown_now_script.sh",
                 "export ACTIONS_RUNNER_HOOK_JOB_COMPLETED=$CURRENT_PATH/shutdown_script.sh",
                 "mkdir -p actions-runner && cd actions-runner",
@@ -881,17 +881,48 @@ class GithubClient {
         return __awaiter(this, void 0, void 0, function* () {
             const octokit = github.getOctokit(this.config.githubToken);
             try {
-                const runners = yield octokit.rest.actions.listSelfHostedRunnersForRepo({
+                // A repository can hold far more runners than one page. GitHub returns them
+                // oldest-first, so the runner we just registered sorts last - with a single
+                // unpaginated request (30 per page) it is invisible once the repo holds more
+                // than a page of runners, and pollForRunnerCreation then times out even though
+                // the runner registered correctly and is online.
+                const perPage = 100;
+                const firstPage = yield octokit.rest.actions.listSelfHostedRunnersForRepo({
                     owner: github.context.repo.owner,
                     repo: github.context.repo.repo,
+                    per_page: perPage,
+                    page: 1,
                 });
+                const runnerList = [...firstPage.data.runners];
+                let lastPageCount = firstPage.data.runners.length;
+                for (let page = 2; lastPageCount === perPage; page++) {
+                    const resp = yield octokit.rest.actions.listSelfHostedRunnersForRepo({
+                        owner: github.context.repo.owner,
+                        repo: github.context.repo.repo,
+                        per_page: perPage,
+                        page: page,
+                    });
+                    runnerList.push(...resp.data.runners);
+                    lastPageCount = resp.data.runners.length;
+                }
                 const searchLabels = {
                     labels: labels.map(function (label) {
                         return { name: label };
                     }),
                 };
-                const matches = _.filter(runners.data.runners, searchLabels);
-                return matches.length > 0 ? matches[0] : null;
+                // A runner label is not unique over time: re-running a failed job reuses the
+                // same run id, so a previous attempt's runner can still be registered under
+                // the same label. Those stale entries are older, so they sort first - taking
+                // matches[0] blindly hands pollForRunnerCreation an offline runner it will
+                // wait on forever. Prefer an online match, and only fall back to the first
+                // match so callers that just want existence (e.g. removeRunnerWithLabels)
+                // keep working.
+                const matches = _.filter(runnerList, searchLabels);
+                if (matches.length === 0) {
+                    return null;
+                }
+                const online = matches.find((runner) => runner.status === "online");
+                return online !== null && online !== void 0 ? online : matches[0];
             }
             catch (error) {
                 core.warning(`Failed to list github runners: ${error}`);

@@ -26,10 +26,30 @@ export class GithubClient {
     const octokit = github.getOctokit(this.config.githubToken);
 
     try {
-      const runners = await octokit.rest.actions.listSelfHostedRunnersForRepo({
+      // A repository can hold far more runners than one page. GitHub returns them
+      // oldest-first, so the runner we just registered sorts last - with a single
+      // unpaginated request (30 per page) it is invisible once the repo holds more
+      // than a page of runners, and pollForRunnerCreation then times out even though
+      // the runner registered correctly and is online.
+      const perPage = 100;
+      const firstPage = await octokit.rest.actions.listSelfHostedRunnersForRepo({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
+        per_page: perPage,
+        page: 1,
       });
+      const runnerList = [...firstPage.data.runners];
+      let lastPageCount = firstPage.data.runners.length;
+      for (let page = 2; lastPageCount === perPage; page++) {
+        const resp = await octokit.rest.actions.listSelfHostedRunnersForRepo({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          per_page: perPage,
+          page: page,
+        });
+        runnerList.push(...resp.data.runners);
+        lastPageCount = resp.data.runners.length;
+      }
 
       const searchLabels = {
         labels: labels.map(function (label) {
@@ -37,8 +57,19 @@ export class GithubClient {
         }),
       };
 
-      const matches = _.filter(runners.data.runners, searchLabels);
-      return matches.length > 0 ? matches[0] : null;
+      // A runner label is not unique over time: re-running a failed job reuses the
+      // same run id, so a previous attempt's runner can still be registered under
+      // the same label. Those stale entries are older, so they sort first - taking
+      // matches[0] blindly hands pollForRunnerCreation an offline runner it will
+      // wait on forever. Prefer an online match, and only fall back to the first
+      // match so callers that just want existence (e.g. removeRunnerWithLabels)
+      // keep working.
+      const matches = _.filter(runnerList, searchLabels);
+      if (matches.length === 0) {
+        return null;
+      }
+      const online = matches.find((runner) => runner.status === "online");
+      return online ?? matches[0];
     } catch (error) {
       core.warning(`Failed to list github runners: ${error}`);
     }
