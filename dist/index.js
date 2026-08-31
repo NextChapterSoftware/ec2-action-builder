@@ -791,10 +791,10 @@ class UserData {
                 "CURRENT_PATH=$(pwd)",
                 'CURRENT_PATH="${CURRENT_PATH%/}"',
                 `echo "./config.sh remove --token ${runnerRegistrationToken.token} || true" > $CURRENT_PATH/shutdown_script.sh`,
-                `echo "shutdown -P +1" > $CURRENT_PATH/shutdown_script.sh`,
+                `echo "shutdown -P +1" >> $CURRENT_PATH/shutdown_script.sh`,
                 "chmod +x $CURRENT_PATH/shutdown_script.sh",
                 `echo "./config.sh remove --token ${runnerRegistrationToken.token} || true" > $CURRENT_PATH/shutdown_now_script.sh`,
-                `echo "shutdown -h now" > $CURRENT_PATH/shutdown_now_script.sh`,
+                `echo "shutdown -h now" >> $CURRENT_PATH/shutdown_now_script.sh`,
                 "chmod +x $CURRENT_PATH/shutdown_now_script.sh",
                 "export ACTIONS_RUNNER_HOOK_JOB_COMPLETED=$CURRENT_PATH/shutdown_script.sh",
                 "mkdir -p actions-runner && cd actions-runner",
@@ -910,8 +910,19 @@ class GithubClient {
                         return { name: label };
                     }),
                 };
+                // A runner label is not unique over time: re-running a failed job reuses the
+                // same run id, so a previous attempt's runner can still be registered under
+                // the same label. Those stale entries are older, so they sort first - taking
+                // matches[0] blindly hands pollForRunnerCreation an offline runner it will
+                // wait on forever. Prefer an online match, and only fall back to the first
+                // match so callers that just want existence (e.g. removeRunnerWithLabels)
+                // keep working.
                 const matches = _.filter(runnerList, searchLabels);
-                return matches.length > 0 ? matches[0] : null;
+                if (matches.length === 0) {
+                    return null;
+                }
+                const online = matches.find((runner) => runner.status === "online");
+                return online !== null && online !== void 0 ? online : matches[0];
             }
             catch (error) {
                 core.warning(`Failed to list github runners: ${error}`);

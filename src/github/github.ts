@@ -57,8 +57,19 @@ export class GithubClient {
         }),
       };
 
+      // A runner label is not unique over time: re-running a failed job reuses the
+      // same run id, so a previous attempt's runner can still be registered under
+      // the same label. Those stale entries are older, so they sort first - taking
+      // matches[0] blindly hands pollForRunnerCreation an offline runner it will
+      // wait on forever. Prefer an online match, and only fall back to the first
+      // match so callers that just want existence (e.g. removeRunnerWithLabels)
+      // keep working.
       const matches = _.filter(runnerList, searchLabels);
-      return matches.length > 0 ? matches[0] : null;
+      if (matches.length === 0) {
+        return null;
+      }
+      const online = matches.find((runner) => runner.status === "online");
+      return online ?? matches[0];
     } catch (error) {
       core.warning(`Failed to list github runners: ${error}`);
     }
