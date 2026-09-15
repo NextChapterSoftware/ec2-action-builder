@@ -1,6 +1,5 @@
 import { ConfigInterface } from "../config/config";
 import * as github from "@actions/github";
-import * as _ from "lodash";
 import * as core from "@actions/core";
 
 export class GithubClient {
@@ -31,13 +30,12 @@ export class GithubClient {
         repo: github.context.repo.repo,
       });
 
-      const searchLabels = {
-        labels: labels.map(function (label) {
-          return { name: label };
-        }),
-      };
-
-      const matches = _.filter(runners.data.runners, searchLabels);
+      // A runner matches when it carries every label we are searching for
+      const matches = runners.data.runners.filter((runner) =>
+        labels.every((label) =>
+          runner.labels.some((runnerLabel) => runnerLabel.name === label)
+        )
+      );
       return matches.length > 0 ? matches[0] : null;
     } catch (error) {
       core.warning(`Failed to list github runners: ${error}`);

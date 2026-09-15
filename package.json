@@ -1,8 +1,11 @@
 {
   "name": "ec2-action-builder",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.13.0",
+  "description": "GitHub action to provision self-hosted runners on AWS EC2 On-Demand and Spot instances",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "tsc && ncc build lib/main.js",
     "format": "prettier --write src/**/*.ts",
@@ -13,35 +16,42 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/teecp/ec2-action-builder.git"
+    "url": "git+https://github.com/unblocked/ec2-action-builder.git"
   },
-  "keywords": [],
+  "keywords": [
+    "github-actions",
+    "self-hosted-runner",
+    "aws",
+    "ec2",
+    "spot-instances"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/teecp/ec2-action-builder/issues"
+    "url": "https://github.com/unblocked/ec2-action-builder/issues"
   },
-  "homepage": "https://github.com/teecp/ec2-action-builder#readme",
+  "homepage": "https://github.com/unblocked/ec2-action-builder#readme",
   "dependencies": {
-    "@actions/core": "^1.10.1",
-    "@actions/github": "^6.0.1",
-    "@aws-sdk/client-ec2": "^3.569.0",
-    "@aws-sdk/client-pricing": "^3.569.0",
-    "@aws-sdk/client-sts": "^3.569.0",
-    "@smithy/types": "^2.12.0",
+    "@actions/core": "^2.0.3",
+    "@actions/github": "^8.0.1",
+    "@aws-sdk/client-ec2": "^3.1131.0",
+    "@aws-sdk/client-pricing": "^3.1131.0",
+    "@aws-sdk/client-sts": "^3.1131.0",
+    "@smithy/types": "^4.18.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@faker-js/faker": "^6.3.1",
-    "@types/chai": "^4.3.1",
-    "@types/mocha": "^9.1.1",
-    "@types/node": "^17.0.31",
-    "@vercel/ncc": "^0.33.4",
-    "chai": "^4.3.6",
-    "dotenv": "^16.0.1",
-    "mocha": "^10.0.0",
-    "prettier": "^2.6.2",
-    "ts-node": "^10.7.0",
-    "typescript": "^4.6.4"
+    "@types/chai": "^4.3.20",
+    "@types/lodash": "^4.17.20",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.13.4",
+    "@vercel/ncc": "^0.45.0",
+    "chai": "^4.5.0",
+    "dotenv": "^16.6.1",
+    "mocha": "^11.8.0",
+    "prettier": "^3.9.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }

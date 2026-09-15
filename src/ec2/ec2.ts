@@ -8,12 +8,13 @@ import {
   _InstanceType,
   RunInstancesCommandInput,
   DescribeImagesCommand,
+  VolumeType,
+  InstanceMarketOptionsRequest,
 } from "@aws-sdk/client-ec2";
 import { STS } from "@aws-sdk/client-sts";
 import * as core from "@actions/core";
 import { UserData } from "./userdata";
 import { Ec2Pricing } from "./pricing";
-import { VolumeType } from "@aws-sdk/client-ec2/dist-types/models/models_1";
 
 interface Tag {
   Key: string;
@@ -278,6 +279,28 @@ export class Ec2Instance {
     return bestInstanceType;
   }
 
+  // Build spot market options. MaxPrice is only sent when we have a usable
+  // positive price; otherwise it is omitted and AWS defaults the cap to the
+  // On-Demand price, which is what we want anyway.
+  spotMarketOptions(maxPriceUSD: number): InstanceMarketOptionsRequest {
+    const options: InstanceMarketOptionsRequest = {
+      MarketType: "spot",
+      SpotOptions: {
+        InstanceInterruptionBehavior: "terminate",
+        SpotInstanceType: "one-time",
+      },
+    };
+    if (Number.isFinite(maxPriceUSD) && maxPriceUSD > 0) {
+      options.SpotOptions!.MaxPrice = maxPriceUSD.toString();
+      core.info(`Spot max price set to On-Demand price of $${maxPriceUSD}/hr`);
+    } else {
+      core.warning(
+        "On-Demand price lookup returned no usable value; omitting spot MaxPrice so AWS applies the On-Demand price cap"
+      );
+    }
+    return options;
+  }
+
   async getInstanceConfiguration(ec2SpotInstanceStrategy: string) {
     const ec2Pricing = new Ec2Pricing(this.config);
     const currentInstanceTypePrice =
@@ -335,16 +358,12 @@ export class Ec2Instance {
 
     switch (ec2SpotInstanceStrategy.toLowerCase()) {
       case "spotonly": {
-        params.InstanceMarketOptions = {
-          MarketType: "spot",
-          SpotOptions: {
-            InstanceInterruptionBehavior: "terminate",
-            MaxPrice: `${await this.getSpotInstancePrice(
-              this.config.ec2InstanceType
-            )}`,
-            SpotInstanceType: "one-time",
-          },
-        };
+        // Cap the bid at the On-Demand price. Bidding the current spot price
+        // (previous behaviour) fails with "0.000000 is an invalid spot instance
+        // price" whenever spot price history is empty for the AZ/instance type.
+        params.InstanceMarketOptions = this.spotMarketOptions(
+          currentInstanceTypePrice
+        );
         break;
       }
       case "besteffort": {
@@ -355,28 +374,18 @@ export class Ec2Instance {
           currentInstanceTypePrice &&
           spotInstanceTypePrice < currentInstanceTypePrice
         )
-          params.InstanceMarketOptions = {
-            MarketType: "spot",
-            SpotOptions: {
-              InstanceInterruptionBehavior: "terminate",
-              MaxPrice: `${currentInstanceTypePrice}`,
-              SpotInstanceType: "one-time",
-            },
-          };
+          params.InstanceMarketOptions = this.spotMarketOptions(
+            currentInstanceTypePrice
+          );
         break;
       }
       case "maxperformance": {
         params.InstanceType = (await this.bestSpotSizeForOnDemandPrice(
           this.config.ec2InstanceType
         )) as _InstanceType;
-        params.InstanceMarketOptions = {
-          MarketType: "spot",
-          SpotOptions: {
-            InstanceInterruptionBehavior: "terminate",
-            MaxPrice: currentInstanceTypePrice.toString(),
-            SpotInstanceType: "one-time",
-          },
-        };
+        params.InstanceMarketOptions = this.spotMarketOptions(
+          currentInstanceTypePrice
+        );
         break;
       }
       case "none": {
