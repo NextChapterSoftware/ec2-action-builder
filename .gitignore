@@ -132,3 +132,4 @@ mockConfig.ts
 
 # intellij
 .idea
+.DS_Store

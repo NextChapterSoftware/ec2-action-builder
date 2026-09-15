@@ -80,12 +80,12 @@ inputs:
     description: >
       Spot instance scheduling modes:
         None -> (default) no spot instances, use on-demand
-        SpotOnly -> Strictly spot instances only
+        SpotOnly -> Strictly spot instances only (max bid is the on-demand price)
         BestEffort -> Use spot instances whenever they are cheaper than on-demand
         MaxPerformance -> Use the largest spot instance in same class for <= the on-demand price 
 
     required: false
     default: "none"
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
